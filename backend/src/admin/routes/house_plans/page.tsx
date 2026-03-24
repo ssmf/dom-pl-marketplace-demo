@@ -101,7 +101,7 @@ const HousePlansPage = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["house_plans"],
     queryFn: () =>
-      sdk.client.fetch<{ house_plans: HousePlan[] }>("/house-plans"),
+      sdk.client.fetch<{ house_plans: HousePlan[] }>("/admin/house-plans"),
   })
 
   const allPlans = data?.house_plans ?? []

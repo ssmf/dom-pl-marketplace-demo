@@ -33,7 +33,7 @@ export function useHousePlanService() {
       }
 
       const queryString = queryParams.toString()
-      const url = `/house-plans${queryString ? `?${queryString}` : ''}`
+      const url = `/store/house-plans${queryString ? `?${queryString}` : ''}`
       const response = await sdk.client.fetch<{ house_plans: any[], count: number, limit: number, offset: number }>(url)
 
       return {
@@ -50,7 +50,7 @@ export function useHousePlanService() {
 
   async function getHousePlan(id: string): Promise<AppHousePlan> {
     try {
-      const response = await sdk.client.fetch<{ house_plan: any }>(`/house-plans/${id}`)
+      const response = await sdk.client.fetch<{ house_plan: any }>(`/store/house-plans/${id}`)
       return mapToAppHousePlan(response.house_plan)
     } catch (error) {
       console.error(`Failed to retrieve house plan with ID ${id}:`, error)
