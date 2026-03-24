@@ -17,10 +17,13 @@ const formatPrice = (price: number) => {
 <template>
   <UCard :ui="{ body: 'p-0', footer: 'p-4' }">
     <!-- Image Placeholder -->
-    <div class="aspect-video bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-t-lg">
-      <UIcon name="i-lucide-home" class="size-12 text-neutral-400" />
+    <div class="aspect-video bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-t-lg overflow-hidden">
+      <NuxtImg
+        v-if="plan?.img"
+        :src="plan.img ?? '/imgs/home_plan1.jpg'"
+        class="w-full h-full" alt="zdjęcie planu"
+      />
     </div>
-
     <!-- Content -->
     <div class="p-4 space-y-4">
       <div>
