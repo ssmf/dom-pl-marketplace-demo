@@ -42,6 +42,15 @@
           "nullable": true,
           "mappedType": "text"
         },
+        "img": {
+          "name": "img",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
         "house_area": {
           "name": "house_area",
           "type": "integer",
