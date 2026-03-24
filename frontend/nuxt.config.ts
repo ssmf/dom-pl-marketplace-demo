@@ -11,6 +11,8 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  css: ['~/assets/css/main.css'],
+
   runtimeConfig: {
     public: {
       medusa: {
@@ -19,8 +21,6 @@ export default defineNuxtConfig({
       }
     }
   },
-
-  css: ['~/assets/css/main.css'],
 
   routeRules: {
     '/': { prerender: true }
@@ -41,5 +41,5 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
-  }
+  },
 })
