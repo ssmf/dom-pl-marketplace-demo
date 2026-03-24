@@ -2,13 +2,38 @@ import { useMedusaClient } from '#imports'
 import { mapToAppHousePlan } from '~/utils/mappers/housePlanMapper'
 import type { AppHousePlan } from '~/types/house-plan'
 
+export interface HousePlanListParams {
+  limit?: number
+  offset?: number
+  minPrice?: number
+  maxPrice?: number
+  minArea?: number
+  maxArea?: number
+  rooms?: number
+}
+
 export function useHousePlanService() {
   const sdk = useMedusaClient()
 
-  async function listHousePlans(params?: Record<string, any>): Promise<{ data: AppHousePlan[], count: number, limit: number, offset: number }> {
+  async function listHousePlans(params?: HousePlanListParams): Promise<{ data: AppHousePlan[], count: number, limit: number, offset: number }> {
     try {
-      const queryParams = params ? new URLSearchParams(params).toString() : ''
-      const url = `/house-plans${queryParams ? `?${queryParams}` : ''}`
+      const queryParams = new URLSearchParams()
+
+      if (params) {
+        if (params.limit !== undefined) queryParams.append('limit', String(params.limit))
+        if (params.offset !== undefined) queryParams.append('offset', String(params.offset))
+        
+        if (params.minPrice !== undefined) queryParams.append('price[$gte]', String(params.minPrice))
+        if (params.maxPrice !== undefined) queryParams.append('price[$lte]', String(params.maxPrice))
+        
+        if (params.minArea !== undefined) queryParams.append('house_area[$gte]', String(params.minArea))
+        if (params.maxArea !== undefined) queryParams.append('house_area[$lte]', String(params.maxArea))
+        
+        if (params.rooms !== undefined) queryParams.append('rooms', String(params.rooms))
+      }
+
+      const queryString = queryParams.toString()
+      const url = `/house-plans${queryString ? `?${queryString}` : ''}`
       const response = await sdk.client.fetch<{ house_plans: any[], count: number, limit: number, offset: number }>(url)
 
       return {

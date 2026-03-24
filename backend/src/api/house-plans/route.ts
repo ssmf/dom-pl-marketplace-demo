@@ -6,7 +6,17 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const housePlanService: HousePlanModuleService =
     req.scope.resolve(HOUSE_PLAN_MODULE)
 
-  const house_plans = await housePlanService.listHousePlans()
+  const { limit = 12, offset = 0, ...filters } = req.query as any
 
-  res.json({ house_plans })
+  const [house_plans, count] = await housePlanService.listAndCountHousePlans(filters, {
+    skip: Number(offset),
+    take: Number(limit),
+  })
+
+  res.json({
+    house_plans,
+    count,
+    limit: Number(limit),
+    offset: Number(offset),
+  })
 }

@@ -1,48 +1,50 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch } from "vue";
 
 export interface FilterState {
-  minPrice?: number
-  maxPrice?: number
-  minArea?: number
-  maxArea?: number
-  rooms?: number
+  minPrice?: number;
+  maxPrice?: number;
+  minArea?: number;
+  maxArea?: number;
+  rooms?: number;
 }
 
 const props = defineProps<{
-  modelValue: FilterState
-}>()
+  initialFilters: FilterState;
+}>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: FilterState]
-  'apply': []
-}>()
+  apply: [value: FilterState];
+  clear: [];
+}>();
 
-const localState = ref<FilterState>({ ...props.modelValue })
+const localState = ref<FilterState>({ ...props.initialFilters });
 
-watch(() => props.modelValue, (newVal) => {
-  localState.value = { ...newVal }
-}, { deep: true })
+watch(
+  () => props.initialFilters,
+  (newFilters) => {
+    localState.value = { ...newFilters };
+  },
+  { deep: true },
+);
 
 const applyFilters = () => {
-  emit('update:modelValue', localState.value)
-  emit('apply')
-}
+  emit("apply", { ...localState.value });
+};
 
 const clearFilters = () => {
-  localState.value = {}
-  emit('update:modelValue', {})
-  emit('apply')
-}
+  localState.value = {};
+  emit("clear");
+};
 
 const roomOptions = [
-  { label: 'Dowolne', value: undefined },
-  { label: '1', value: 1 },
-  { label: '2', value: 2 },
-  { label: '3', value: 3 },
-  { label: '4', value: 4 },
-  { label: '5+', value: 5 }
-]
+  { label: "Dowolne", value: undefined },
+  { label: "1", value: 1 },
+  { label: "2", value: 2 },
+  { label: "3", value: 3 },
+  { label: "4", value: 4 },
+  { label: "5+", value: 5 },
+];
 </script>
 
 <template>
@@ -87,18 +89,12 @@ const roomOptions = [
 
     <!-- Pokoje -->
     <UFormField label="Liczba pokoi">
-      <USelect
-        v-model="localState.rooms"
-        :items="roomOptions"
-        class="w-full"
-      />
+      <USelect v-model="localState.rooms" :items="roomOptions" class="w-full" />
     </UFormField>
 
     <!-- Akcje -->
     <div class="flex flex-col gap-2 pt-4">
-      <UButton block @click="applyFilters">
-        Zastosuj filtry
-      </UButton>
+      <UButton block @click="applyFilters"> Zastosuj filtry </UButton>
       <UButton block variant="ghost" color="neutral" @click="clearFilters">
         Wyczyść
       </UButton>
