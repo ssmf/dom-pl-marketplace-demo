@@ -13,6 +13,7 @@ yarn docker:up
 ```
 
 Create the first admin user:
+
 ```bash
 docker compose run --rm medusa yarn medusa user -e admin@admin.com -p admin
 ```
@@ -63,3 +64,7 @@ To seed database with basic house plans run this command
 ```bash
 docker exec medusa_backend npm run seed:house-plans
 ```
+
+## Publishable Key
+
+To ensure the frontend communicates correctly with the backend, generate a publishable key in the Medusa admin dashboard and add it to the frontend's `.env` file as `NUXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`.
