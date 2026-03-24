@@ -11,6 +11,15 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  runtimeConfig: {
+    public: {
+      medusa: {
+        baseUrl: 'http://localhost:9000', // overridden by NUXT_PUBLIC_MEDUSA_BASE_URL
+        publishableKey: '' // overridden by NUXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+      }
+    }
+  },
+
   css: ['~/assets/css/main.css'],
 
   routeRules: {
