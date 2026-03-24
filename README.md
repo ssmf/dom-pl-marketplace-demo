@@ -55,3 +55,11 @@ git checkout -b feat/your-feature
 git push -u origin feat/your-feature
 # open a PR
 ```
+
+## Seeder
+
+To seed database with basic house plans run this command
+
+```bash
+docker exec medusa_backend npm run seed:house-plans
+```
