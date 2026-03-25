@@ -16,6 +16,7 @@
     "build": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "seed:house-plans": "medusa exec ./src/scripts/seed-house-plans.ts",
+    "seed:vendors": "medusa exec ./src/scripts/seed-vendors.ts",
     "start": "medusa start",
     "dev": "medusa develop",
     "docker:up": "docker compose up --build -d",

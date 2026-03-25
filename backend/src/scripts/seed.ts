@@ -4,6 +4,8 @@ import {
   Modules,
   ProductStatus,
 } from "@medusajs/framework/utils";
+import { VENDOR_MODULE } from "../modules/vendor";
+import VendorModuleService from "../modules/vendor/service";
 import {
   createWorkflow,
   transform,
@@ -919,4 +921,36 @@ export default async function seedDemoData({ container }: ExecArgs) {
   });
 
   logger.info("Finished seeding inventory levels data.");
+
+  logger.info("Seeding vendor data...");
+  const vendorService: VendorModuleService = container.resolve(VENDOR_MODULE);
+
+  const existingVendors = await vendorService.listVendors();
+  if (!existingVendors.length) {
+    await vendorService.createVendors([
+      {
+        company_name: "Projekty Domów Kowalski",
+        first_name: "Jan",
+        last_name: "Kowalski",
+        email: "jan.kowalski@example.com",
+        published_plans_count: 12,
+        revenue: 23400,
+        orders_count: 47,
+        average_rating: 4.8,
+      },
+      {
+        company_name: "Projekty Malinowski",
+        first_name: "Marek",
+        last_name: "Malinowski",
+        email: "biuro@malinowski-projekty.pl",
+        published_plans_count: 7,
+        revenue: 11200,
+        orders_count: 21,
+        average_rating: 4.5,
+      },
+    ]);
+    logger.info("Finished seeding vendor data.");
+  } else {
+    logger.info("Vendors already exist, skipping.");
+  }
 }
