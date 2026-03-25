@@ -22,13 +22,13 @@ export function useHousePlanService() {
       if (params) {
         if (params.limit !== undefined) queryParams.append('limit', String(params.limit))
         if (params.offset !== undefined) queryParams.append('offset', String(params.offset))
-        
+
         if (params.minPrice !== undefined) queryParams.append('price[$gte]', String(params.minPrice))
         if (params.maxPrice !== undefined) queryParams.append('price[$lte]', String(params.maxPrice))
-        
+
         if (params.minArea !== undefined) queryParams.append('house_area[$gte]', String(params.minArea))
         if (params.maxArea !== undefined) queryParams.append('house_area[$lte]', String(params.maxArea))
-        
+
         if (params.rooms !== undefined) queryParams.append('rooms', String(params.rooms))
       }
 
