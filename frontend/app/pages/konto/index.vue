@@ -1,3 +1,37 @@
+<script setup lang="ts">
+import { useVendorService } from '~/composables/services/useVendorService'
+
+const customers = [
+  {
+    name: 'Anna Kowalska',
+    email: 'anna.kowalska@example.com',
+    icon: 'i-lucide-user',
+    href: '/konto/klient'
+  },
+  {
+    name: 'Piotr Wiśniewski',
+    email: 'piotr.wisniewski@example.com',
+    icon: 'i-lucide-user',
+    href: '/konto/klient'
+  }
+]
+
+const { listVendors } = useVendorService()
+
+const { data: vendorsData, pending: vendorsPending } = await useAsyncData(
+  'konto-vendors',
+  () => listVendors({ limit: 2 })
+)
+
+const vendorCards = computed(() =>
+  (vendorsData.value?.data ?? []).map(v => ({
+    id: v.id,
+    name: v.company_name,
+    email: v.email
+  }))
+)
+</script>
+
 <template>
   <UContainer class="flex flex-1 items-center justify-center py-16">
     <div class="w-full max-w-2xl space-y-10">
@@ -64,33 +98,49 @@
           </h2>
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <UCard
-            v-for="account in vendors"
-            :key="account.email"
-            class="cursor-pointer transition-shadow hover:shadow-md"
-            as="a"
-            :href="account.href"
-          >
-            <div class="flex items-center gap-4">
-              <UAvatar
-                :alt="account.name"
-                :icon="account.icon"
-                size="md"
-              />
-              <div class="min-w-0">
-                <p class="truncate font-medium text-default">
-                  {{ account.name }}
-                </p>
-                <p class="truncate text-sm text-muted">
-                  {{ account.email }}
-                </p>
+          <template v-if="vendorsPending">
+            <UCard
+              v-for="n in 2"
+              :key="n"
+            >
+              <div class="flex items-center gap-4">
+                <USkeleton class="size-10 rounded-full shrink-0" />
+                <div class="min-w-0 flex-1 space-y-2">
+                  <USkeleton class="h-4 w-32" />
+                  <USkeleton class="h-3 w-48" />
+                </div>
               </div>
-              <UIcon
-                name="i-lucide-arrow-right"
-                class="ml-auto size-4 shrink-0 text-muted"
-              />
-            </div>
-          </UCard>
+            </UCard>
+          </template>
+          <template v-else>
+            <UCard
+              v-for="vendor in vendorCards"
+              :key="vendor.id"
+              class="cursor-pointer transition-shadow hover:shadow-md"
+              as="a"
+              :href="`/konto/sprzedawca?id=${vendor.id}`"
+            >
+              <div class="flex items-center gap-4">
+                <UAvatar
+                  :alt="vendor.name"
+                  icon="i-lucide-store"
+                  size="md"
+                />
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-default">
+                    {{ vendor.name }}
+                  </p>
+                  <p class="truncate text-sm text-muted">
+                    {{ vendor.email }}
+                  </p>
+                </div>
+                <UIcon
+                  name="i-lucide-arrow-right"
+                  class="ml-auto size-4 shrink-0 text-muted"
+                />
+              </div>
+            </UCard>
+          </template>
         </div>
       </div>
 
@@ -104,35 +154,3 @@
     </div>
   </UContainer>
 </template>
-
-<script setup lang="ts">
-const customers = [
-  {
-    name: 'Anna Kowalska',
-    email: 'anna.kowalska@example.com',
-    icon: 'i-lucide-user',
-    href: '/konto/klient'
-  },
-  {
-    name: 'Piotr Wiśniewski',
-    email: 'piotr.wisniewski@example.com',
-    icon: 'i-lucide-user',
-    href: '/konto/klient'
-  }
-]
-
-const vendors = [
-  {
-    name: 'Jan Kowalski',
-    email: 'jan.kowalski@example.com',
-    icon: 'i-lucide-store',
-    href: '/konto/sprzedawca'
-  },
-  {
-    name: 'Projekty Malinowski',
-    email: 'biuro@malinowski-projekty.pl',
-    icon: 'i-lucide-store',
-    href: '/konto/sprzedawca'
-  }
-]
-</script>
