@@ -1,31 +1,31 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { HOUSE_PLAN_MODULE } from "../../../modules/house_plan"
 import HousePlanModuleService from "../../../modules/house_plan/service"
+import { CreateHousePlanSchema } from "./validators"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const housePlanService: HousePlanModuleService =
     req.scope.resolve(HOUSE_PLAN_MODULE)
 
-  const { limit = 12, offset = 0, ...filters } = req.query as any
+  const limit = Number(req.query.limit ?? 12)
+  const offset = Number(req.query.offset ?? 0)
 
-  const [house_plans, count] = await housePlanService.listAndCountHousePlans(filters, {
-    skip: Number(offset),
-    take: Number(limit),
+  const [house_plans, count] = await housePlanService.listAndCountHousePlans({}, {
+    skip: offset,
+    take: limit,
   })
 
-  res.json({
-    house_plans,
-    count,
-    limit: Number(limit),
-    offset: Number(offset),
-  })
+  res.json({ house_plans, count, limit, offset })
 }
 
-export async function POST(req: MedusaRequest, res: MedusaResponse) {
+export async function POST(
+  req: MedusaRequest<CreateHousePlanSchema>,
+  res: MedusaResponse
+) {
   const housePlanService: HousePlanModuleService =
     req.scope.resolve(HOUSE_PLAN_MODULE)
 
-  const house_plan = await housePlanService.createHousePlans(req.body as any)
+  const house_plan = await housePlanService.createHousePlans(req.validatedBody)
 
   res.status(201).json({ house_plan })
 }
