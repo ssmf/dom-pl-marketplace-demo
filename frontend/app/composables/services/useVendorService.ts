@@ -1,6 +1,6 @@
 import { useMedusaClient } from '#imports'
 import { mapToAppVendor } from '~/utils/mappers/vendorMapper'
-import type { AppVendor } from '~/types/vendor'
+import type { AppVendor, VendorApiResponse } from '~/types/vendor'
 
 export function useVendorService() {
   const sdk = useMedusaClient()
@@ -13,11 +13,11 @@ export function useVendorService() {
 
       const queryString = queryParams.toString()
       const url = `/store/vendors${queryString ? `?${queryString}` : ''}`
-      const response = await sdk.client.fetch<{ vendors: any[]; count: number }>(url)
+      const response = await sdk.client.fetch<{ vendors: VendorApiResponse[]; count: number }>(url)
 
       return {
         data: (response.vendors || []).map(mapToAppVendor),
-        count: response.count || 0,
+        count: response.count || 0
       }
     } catch (error) {
       console.error('Failed to list vendors:', error)

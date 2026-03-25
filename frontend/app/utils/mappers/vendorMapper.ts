@@ -11,5 +11,6 @@ export function mapToAppVendor(raw: any): AppVendor {
     revenue: raw.revenue ?? 0,
     orders_count: raw.orders_count ?? 0,
     average_rating: raw.average_rating ?? null,
+    created_at: raw.created_at ?? null
   }
 }

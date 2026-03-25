@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { useVendorService } from '~/composables/services/useVendorService'
 
 type Order = {
   id: string
@@ -10,18 +11,49 @@ type Order = {
   amount: string
 }
 
-const vendor = {
-  name: 'Jan Kowalski',
-  company: 'Projekty Domów Kowalski',
-  since: '2023'
-}
+const route = useRoute()
+const { getVendor } = useVendorService()
 
-const stats = [
-  { label: 'Opublikowane plany', value: '12', icon: 'i-lucide-layout-template', trend: '+2 w tym miesiącu' },
-  { label: 'Zamówienia', value: '47', icon: 'i-lucide-shopping-bag', trend: '+8 w tym miesiącu' },
-  { label: 'Przychód', value: '23 400 zł', icon: 'i-lucide-banknote', trend: '+1 200 zł w tym miesiącu' },
-  { label: 'Średnia ocena', value: '4.8', icon: 'i-lucide-star', trend: 'z 23 opinii' }
-]
+const { data: vendorData } = await useAsyncData(
+  `vendor-${route.query.id}`,
+  () => getVendor(route.query.id as string),
+  { server: false }
+)
+
+const vendor = computed(() => ({
+  name: vendorData.value ? `${vendorData.value.first_name} ${vendorData.value.last_name}` : '—',
+  company: vendorData.value?.company_name ?? '—',
+  createdAt: vendorData.value?.created_at
+    ? vendorData.value.created_at.slice(0, 10).split('-').reverse().join('.')
+    : '—'
+}))
+
+const stats = computed(() => [
+  {
+    label: 'Opublikowane plany',
+    value: String(vendorData.value?.published_plans_count ?? '—'),
+    icon: 'i-lucide-layout-template',
+    trend: ''
+  },
+  {
+    label: 'Zamówienia',
+    value: String(vendorData.value?.orders_count ?? '—'),
+    icon: 'i-lucide-shopping-bag',
+    trend: ''
+  },
+  {
+    label: 'Przychód',
+    value: vendorData.value ? `${vendorData.value.revenue.toLocaleString('pl-PL')} zł` : '—',
+    icon: 'i-lucide-banknote',
+    trend: ''
+  },
+  {
+    label: 'Średnia ocena',
+    value: vendorData.value?.average_rating != null ? String(vendorData.value.average_rating) : '—',
+    icon: 'i-lucide-star',
+    trend: ''
+  }
+])
 
 const recentOrders: Order[] = [
   { id: '#2041', plan: 'Dom parterowy A1', buyer: 'Anna Nowak', date: '24.03.2026', status: 'Opłacone', amount: '599 zł' },
@@ -73,7 +105,7 @@ const planStatusColor = (status: string) => status === 'Aktywny' ? 'success' : '
             {{ vendor.company }}
           </h1>
           <p class="text-sm text-muted">
-            {{ vendor.name }} · Sprzedawca od {{ vendor.since }}
+            {{ vendor.name }} · Sprzedawca od {{ vendor.createdAt }}
           </p>
         </div>
       </div>
