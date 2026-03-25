@@ -1,5 +1,5 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Buildings, Plus } from "@medusajs/icons"
+import { Buildings, Plus, Trash, EllipsisHorizontal } from "@medusajs/icons"
 import {
   Button,
   Container,
@@ -14,6 +14,9 @@ import {
   Text,
   Textarea,
   toast,
+  DropdownMenu,
+  IconButton,
+  Prompt,
 } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -60,9 +63,68 @@ const initialForm: CreateHousePlanForm = {
   min_plot_dimensions_after_adaptation: "",
 }
 
+const DeleteAction = ({ plan }: { plan: HousePlan }) => {
+  const [open, setOpen] = useState(false)
+  const queryClient = useQueryClient()
+
+  const deletePlan = useMutation({
+    mutationFn: () =>
+      sdk.client.fetch(`/admin/house-plans/${plan.id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["house_plans"] })
+      toast.success("Plan został usunięty")
+      setOpen(false)
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Nie udało się usunąć planu")
+    },
+  })
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenu.Trigger asChild>
+          <IconButton size="small" variant="transparent">
+            <EllipsisHorizontal />
+          </IconButton>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item
+            className="gap-x-2 text-ui-fg-error"
+            onClick={() => setOpen(true)}
+          >
+            <Trash className="text-ui-fg-error" />
+            Usuń
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+
+      <Prompt open={open} onOpenChange={setOpen}>
+        <Prompt.Content>
+          <Prompt.Header>
+            <Prompt.Title>Usuń plan domu</Prompt.Title>
+            <Prompt.Description>
+              Czy na pewno chcesz usunąć „{plan.title}"? Tej operacji nie można cofnąć.
+            </Prompt.Description>
+          </Prompt.Header>
+          <Prompt.Footer>
+            <Prompt.Cancel onClick={() => setOpen(false)}>Anuluj</Prompt.Cancel>
+            <Prompt.Action
+              onClick={() => deletePlan.mutate()}
+              disabled={deletePlan.isPending}
+            >
+              Usuń
+            </Prompt.Action>
+          </Prompt.Footer>
+        </Prompt.Content>
+      </Prompt>
+    </>
+  )
+}
+
 const columnHelper = createDataTableColumnHelper<HousePlan>()
 
-const columns = [
+const getColumns = () => [
   columnHelper.accessor("title", {
     header: "Tytuł",
     cell: ({ getValue }) => (
@@ -121,6 +183,11 @@ const columns = [
         {new Date(getValue()).toLocaleDateString("pl-PL")}
       </Text>
     ),
+  }),
+  columnHelper.display({
+    id: "actions",
+    header: "",
+    cell: ({ row }) => <DeleteAction plan={row.original} />,
   }),
 ]
 
@@ -313,6 +380,8 @@ const HousePlansPage = () => {
     pageIndex * pageSize,
     (pageIndex + 1) * pageSize
   )
+
+  const columns = getColumns()
 
   const table = useDataTable({
     data: paginated,
