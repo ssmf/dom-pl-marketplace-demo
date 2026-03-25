@@ -20,3 +20,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     offset: Number(offset),
   })
 }
+
+export async function POST(req: MedusaRequest, res: MedusaResponse) {
+  const housePlanService: HousePlanModuleService =
+    req.scope.resolve(HOUSE_PLAN_MODULE)
+
+  const house_plan = await housePlanService.createHousePlans(req.body as any)
+
+  res.status(201).json({ house_plan })
+}
