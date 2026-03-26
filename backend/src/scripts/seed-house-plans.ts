@@ -1,6 +1,6 @@
 import { ExecArgs } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys, Modules, ProductStatus } from "@medusajs/framework/utils"
-import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
+import { createProductsWorkflow, updateProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { HOUSE_PLAN_MODULE } from "../modules/house_plan"
 import { VENDOR_MODULE } from "../modules/vendor"
 import VendorModuleService from "../modules/vendor/service"
@@ -118,6 +118,7 @@ export default async function seedHousePlans({ container }: ExecArgs) {
           {
             title: plan.title,
             status: ProductStatus.PUBLISHED,
+            thumbnail: plan.img ?? undefined,
             options: [{ title: 'Wersja', values: ['Dokumentacja'] }],
             variants: [
               {
@@ -141,7 +142,29 @@ export default async function seedHousePlans({ container }: ExecArgs) {
     logger.info(`Linked "${plan.title}" to product ${products[0].id}`)
   }
 
-  logger.info('Finished linking house plans to Medusa products.')
+
+  // Sync thumbnails for products that are already linked but may be missing a thumbnail
+  logger.info('Syncing thumbnails for existing linked products...')
+  for (const plan of allPlans) {
+    if (!plan.img) continue
+    const { data: linked } = await query.graph({
+      entity: 'house_plan',
+      fields: ['id', 'product.id', 'product.thumbnail'],
+      filters: { id: plan.id },
+    })
+    const linkedProduct = linked[0]?.product as any
+    if (linkedProduct?.id && !linkedProduct?.thumbnail) {
+      await updateProductsWorkflow(container).run({
+        input: {
+          selector: { id: linkedProduct.id },
+          update: { thumbnail: plan.img },
+        },
+      })
+      logger.info(`Updated thumbnail for product ${linkedProduct.id}`)
+    }
+  }
+  logger.info('Thumbnails synced.')
+    logger.info('Finished linking house plans to Medusa products.')
 
   // Link house plans to vendors
   const vendorService: VendorModuleService = container.resolve(VENDOR_MODULE)
