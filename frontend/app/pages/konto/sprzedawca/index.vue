@@ -30,14 +30,14 @@ const vendor = computed(() => ({
 
 const stats = computed(() => [
   {
-    label: 'Opublikowane plany',
-    value: String(vendorData.value?.published_plans_count ?? '—'),
+    label: 'Plany domów',
+    value: String(vendorData.value?.house_plans_count ?? '—'),
     icon: 'i-lucide-layout-template',
     trend: ''
   },
   {
     label: 'Zamówienia',
-    value: String(vendorData.value?.orders_count ?? '—'),
+    value: '—',
     icon: 'i-lucide-shopping-bag',
     trend: ''
   },

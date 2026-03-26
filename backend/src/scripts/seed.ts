@@ -410,7 +410,6 @@ export default async function seedDemoData({ container }: ExecArgs) {
         email: "jan.kowalski@example.com",
         published_plans_count: 12,
         revenue: 23400,
-        orders_count: 47,
         average_rating: 4.8,
       },
       {
@@ -420,7 +419,6 @@ export default async function seedDemoData({ container }: ExecArgs) {
         email: "biuro@malinowski-projekty.pl",
         published_plans_count: 7,
         revenue: 11200,
-        orders_count: 21,
         average_rating: 4.5,
       },
     ]);
