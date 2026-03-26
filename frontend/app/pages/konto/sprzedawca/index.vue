@@ -12,7 +12,7 @@ type Order = {
 }
 
 const route = useRoute()
-const { getVendor } = useVendorService()
+const { getVendor, getVendorHousePlans } = useVendorService()
 
 const { data: vendorData } = await useAsyncData(
   `vendor-${route.query.id}`,
@@ -63,13 +63,18 @@ const recentOrders: Order[] = [
   { id: '#2037', plan: 'Bungalow D1', buyer: 'Katarzyna Lewandowska', date: '17.03.2026', status: 'Zwrot', amount: '349 zł' }
 ]
 
-const myPlans = [
-  { title: 'Dom parterowy A1', sales: 18, price: '599 zł', status: 'Aktywny' },
-  { title: 'Willa z poddaszem B3', sales: 11, price: '799 zł', status: 'Aktywny' },
-  { title: 'Dom piętrowy C2', sales: 9, price: '499 zł', status: 'Aktywny' },
-  { title: 'Bungalow D1', sales: 6, price: '349 zł', status: 'Wersja robocza' },
-  { title: 'Dom z garażem E2', sales: 3, price: '649 zł', status: 'Aktywny' }
-]
+const { data: housePlansData } = await useAsyncData(
+  `vendor-house-plans-${route.query.id}`,
+  () => getVendorHousePlans(route.query.id as string),
+  { server: false }
+)
+
+const myPlans = computed(() =>
+  (housePlansData.value ?? []).map(plan => ({
+    title: plan.title,
+    price: `${plan.price.toLocaleString('pl-PL')} zł`
+  }))
+)
 
 const orderColumns: TableColumn<Order>[] = [
   { accessorKey: 'id', header: 'Nr' },
@@ -86,8 +91,6 @@ const statusColor = (status: string) => {
   if (status === 'Zwrot') return 'error'
   return 'neutral'
 }
-
-const planStatusColor = (status: string) => status === 'Aktywny' ? 'success' : 'neutral'
 </script>
 
 <template>
@@ -221,17 +224,9 @@ const planStatusColor = (status: string) => status === 'Aktywny' ? 'success' : '
                     {{ plan.title }}
                   </p>
                   <p class="text-xs text-muted">
-                    {{ plan.sales }} sprzedaży · {{ plan.price }}
+                    {{ plan.price }}
                   </p>
                 </div>
-                <UBadge
-                  :color="planStatusColor(plan.status)"
-                  variant="subtle"
-                  size="sm"
-                  class="ml-2 shrink-0"
-                >
-                  {{ plan.status }}
-                </UBadge>
               </li>
             </ul>
           </UCard>

@@ -1,6 +1,8 @@
 import { useMedusaClient } from '#imports'
 import { mapToAppVendor } from '~/utils/mappers/vendorMapper'
+import { mapToAppHousePlan } from '~/utils/mappers/housePlanMapper'
 import type { AppVendor, VendorApiResponse } from '~/types/vendor'
+import type { AppHousePlan, HousePlanApiResponse } from '~/types/house-plan'
 
 export function useVendorService() {
   const sdk = useMedusaClient()
@@ -35,5 +37,15 @@ export function useVendorService() {
     }
   }
 
-  return { listVendors, getVendor }
+  async function getVendorHousePlans(vendorId: string): Promise<AppHousePlan[]> {
+    try {
+      const response = await sdk.client.fetch<{ house_plans: HousePlanApiResponse[] }>(`/store/vendors/${vendorId}/house-plans`)
+      return (response.house_plans || []).map(mapToAppHousePlan)
+    } catch (error) {
+      console.error(`Failed to retrieve house plans for vendor ${vendorId}:`, error)
+      throw error
+    }
+  }
+
+  return { listVendors, getVendor, getVendorHousePlans }
 }
