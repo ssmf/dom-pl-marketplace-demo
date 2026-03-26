@@ -1,26 +1,28 @@
 <script setup lang="ts">
 import { useVendorService } from '~/composables/services/useVendorService'
+import { useCustomerService } from '~/composables/services/useCustomerService'
 
-const customers = [
-  {
-    name: 'Anna Kowalska',
-    email: 'anna.kowalska@example.com',
-    icon: 'i-lucide-user',
-    href: '/konto/klient'
-  },
-  {
-    name: 'Piotr Wiśniewski',
-    email: 'piotr.wisniewski@example.com',
-    icon: 'i-lucide-user',
-    href: '/konto/klient'
-  }
-]
-
+const { listCustomers } = useCustomerService()
 const { listVendors } = useVendorService()
+
+const { data: customersData, pending: customersPending } = await useAsyncData(
+  'konto-customers',
+  () => listCustomers({ limit: 2 }),
+  { server: false }
+)
+
+const customerCards = computed(() =>
+  (customersData.value?.data ?? []).map(c => ({
+    id: c.id,
+    name: `${c.first_name} ${c.last_name}`,
+    email: c.email,
+  }))
+)
 
 const { data: vendorsData, pending: vendorsPending } = await useAsyncData(
   'konto-vendors',
-  () => listVendors({ limit: 2 })
+  () => listVendors({ limit: 2 }),
+  { server: false }
 )
 
 const vendorCards = computed(() =>
@@ -56,33 +58,49 @@ const vendorCards = computed(() =>
           </h2>
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <UCard
-            v-for="account in customers"
-            :key="account.email"
-            class="cursor-pointer transition-shadow hover:shadow-md"
-            as="a"
-            :href="account.href"
-          >
-            <div class="flex items-center gap-4">
-              <UAvatar
-                :alt="account.name"
-                :icon="account.icon"
-                size="md"
-              />
-              <div class="min-w-0">
-                <p class="truncate font-medium text-default">
-                  {{ account.name }}
-                </p>
-                <p class="truncate text-sm text-muted">
-                  {{ account.email }}
-                </p>
+          <template v-if="customersPending">
+            <UCard
+              v-for="n in 2"
+              :key="n"
+            >
+              <div class="flex items-center gap-4">
+                <USkeleton class="size-10 rounded-full shrink-0" />
+                <div class="min-w-0 flex-1 space-y-2">
+                  <USkeleton class="h-4 w-32" />
+                  <USkeleton class="h-3 w-48" />
+                </div>
               </div>
-              <UIcon
-                name="i-lucide-arrow-right"
-                class="ml-auto size-4 shrink-0 text-muted"
-              />
-            </div>
-          </UCard>
+            </UCard>
+          </template>
+          <template v-else>
+            <UCard
+              v-for="customer in customerCards"
+              :key="customer.id"
+              class="cursor-pointer transition-shadow hover:shadow-md"
+              as="a"
+              :href="`/konto/klient?id=${customer.id}`"
+            >
+              <div class="flex items-center gap-4">
+                <UAvatar
+                  :alt="customer.name"
+                  icon="i-lucide-user"
+                  size="md"
+                />
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-default">
+                    {{ customer.name }}
+                  </p>
+                  <p class="truncate text-sm text-muted">
+                    {{ customer.email }}
+                  </p>
+                </div>
+                <UIcon
+                  name="i-lucide-arrow-right"
+                  class="ml-auto size-4 shrink-0 text-muted"
+                />
+              </div>
+            </UCard>
+          </template>
         </div>
       </div>
 
