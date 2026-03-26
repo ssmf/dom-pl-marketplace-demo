@@ -1,6 +1,8 @@
 import { ExecArgs } from "@medusajs/framework/types"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { HOUSE_PLAN_MODULE } from "../modules/house_plan"
+import { VENDOR_MODULE } from "../modules/vendor"
+import VendorModuleService from "../modules/vendor/service"
 
 const PLANS = [
   {
@@ -78,14 +80,35 @@ export default async function seedHousePlans({ container }: ExecArgs) {
 
   const existing = await housePlanService.listHousePlans()
 
+  let allPlans = existing
   if (existing.length > 0) {
     logger.info(
-      `Skipping — ${existing.length} house plan(s) already exist in the database.`
+      `Skipping creation — ${existing.length} house plan(s) already exist in the database.`
     )
-    return
+  } else {
+    allPlans = await housePlanService.createHousePlans(PLANS)
+    logger.info(`Seeded ${PLANS.length} house plans successfully.`)
   }
 
-  await housePlanService.createHousePlans(PLANS)
+  const link = container.resolve(ContainerRegistrationKeys.LINK)
+  const vendorService: VendorModuleService = container.resolve(VENDOR_MODULE)
+  const vendors = await vendorService.listVendors()
 
-  logger.info(`Seeded ${PLANS.length} house plans successfully.`)
+  if (vendors.length >= 2) {
+    logger.info("Linking house plans to vendors...")
+    const half = Math.ceil(allPlans.length / 2)
+    for (const plan of allPlans.slice(0, half)) {
+      await link.create({
+        [VENDOR_MODULE]: { vendor_id: vendors[0].id },
+        [HOUSE_PLAN_MODULE]: { house_plan_id: plan.id },
+      })
+    }
+    for (const plan of allPlans.slice(half)) {
+      await link.create({
+        [VENDOR_MODULE]: { vendor_id: vendors[1].id },
+        [HOUSE_PLAN_MODULE]: { house_plan_id: plan.id },
+      })
+    }
+    logger.info("House plans linked to vendors successfully.")
+  }
 }

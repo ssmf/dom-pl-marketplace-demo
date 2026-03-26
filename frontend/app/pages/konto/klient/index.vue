@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { useCustomerService } from '~/composables/services/useCustomerService'
 
 type Order = {
   id: string
@@ -9,11 +10,22 @@ type Order = {
   amount: string
 }
 
-const customer = {
-  name: 'Anna Kowalska',
-  email: 'anna.kowalska@example.com',
-  since: '2024'
-}
+const route = useRoute()
+const { getCustomer } = useCustomerService()
+
+const { data: customerData } = await useAsyncData(
+  `customer-${route.query.id}`,
+  () => getCustomer(route.query.id as string),
+  { server: false }
+)
+
+const customer = computed(() => ({
+  name: customerData.value ? `${customerData.value.first_name} ${customerData.value.last_name}` : '—',
+  email: customerData.value?.email ?? '—',
+  since: customerData.value?.created_at
+    ? new Date(customerData.value.created_at).getFullYear().toString()
+    : '—',
+}))
 
 const stats = [
   { label: 'Zamówienia', value: '5', icon: 'i-lucide-shopping-bag', trend: '2 w tym roku' },
