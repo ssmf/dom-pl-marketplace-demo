@@ -47,5 +47,24 @@ export function useVendorService() {
     }
   }
 
-  return { listVendors, getVendor, getVendorHousePlans }
+  async function createVendorHousePlan(vendorId: string, data: {
+    title: string
+    price: number
+    description?: string
+    img?: string
+    house_area: number
+    boiler_room_area?: number
+    rooms: number
+    bathrooms_and_wc: number
+    plot_dimensions: string
+    min_plot_dimensions_after_adaptation?: string
+  }): Promise<AppHousePlan> {
+    const response = await sdk.client.fetch<{ house_plan: HousePlanApiResponse }>(
+      `/store/vendors/${vendorId}/house-plans`,
+      { method: 'POST', body: data }
+    )
+    return mapToAppHousePlan(response.house_plan)
+  }
+
+  return { listVendors, getVendor, getVendorHousePlans, createVendorHousePlan }
 }

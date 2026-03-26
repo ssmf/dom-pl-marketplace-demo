@@ -11,8 +11,82 @@ type Order = {
   amount: string
 }
 
+type PlanForm = {
+  title: string
+  price: string
+  description: string
+  img: string
+  house_area: string
+  boiler_room_area: string
+  rooms: string
+  bathrooms_and_wc: string
+  plot_dimensions: string
+  min_plot_dimensions_after_adaptation: string
+}
+
+const emptyForm = (): PlanForm => ({
+  title: '',
+  price: '',
+  description: '',
+  img: '',
+  house_area: '',
+  boiler_room_area: '',
+  rooms: '',
+  bathrooms_and_wc: '',
+  plot_dimensions: '',
+  min_plot_dimensions_after_adaptation: '',
+})
+
 const route = useRoute()
-const { getVendor, getVendorHousePlans } = useVendorService()
+const toast = useToast()
+const { getVendor, getVendorHousePlans, createVendorHousePlan } = useVendorService()
+
+const slideoverOpen = ref(false)
+const submitting = ref(false)
+const form = ref<PlanForm>(emptyForm())
+const formErrors = ref<Partial<PlanForm>>({})
+
+function validateForm(): boolean {
+  const e: Partial<PlanForm> = {}
+  if (!form.value.title.trim()) e.title = 'Tytuł jest wymagany'
+  if (!form.value.price || isNaN(Number(form.value.price))) e.price = 'Podaj poprawną cenę'
+  if (!form.value.house_area || isNaN(Number(form.value.house_area))) e.house_area = 'Podaj powierzchnię'
+  if (!form.value.rooms || isNaN(Number(form.value.rooms))) e.rooms = 'Podaj liczbę pokoi'
+  if (!form.value.bathrooms_and_wc || isNaN(Number(form.value.bathrooms_and_wc))) e.bathrooms_and_wc = 'Podaj liczbę łazienek'
+  if (!form.value.plot_dimensions.trim()) e.plot_dimensions = 'Wymiary działki są wymagane'
+  formErrors.value = e
+  return Object.keys(e).length === 0
+}
+
+async function submitPlan() {
+  if (!validateForm()) return
+  submitting.value = true
+  try {
+    await createVendorHousePlan(route.query.id as string, {
+      title: form.value.title.trim(),
+      price: Number(form.value.price),
+      house_area: Number(form.value.house_area),
+      rooms: Number(form.value.rooms),
+      bathrooms_and_wc: Number(form.value.bathrooms_and_wc),
+      plot_dimensions: form.value.plot_dimensions.trim(),
+      ...(form.value.description.trim() && { description: form.value.description.trim() }),
+      ...(form.value.img.trim() && { img: form.value.img.trim() }),
+      ...(form.value.boiler_room_area && !isNaN(Number(form.value.boiler_room_area)) && { boiler_room_area: Number(form.value.boiler_room_area) }),
+      ...(form.value.min_plot_dimensions_after_adaptation.trim() && { min_plot_dimensions_after_adaptation: form.value.min_plot_dimensions_after_adaptation.trim() }),
+    })
+    toast.add({ title: 'Plan dodany', description: 'Plan domu został opublikowany.', color: 'success' })
+    slideoverOpen.value = false
+    form.value = emptyForm()
+    await Promise.all([
+      refreshNuxtData(`vendor-${route.query.id}`),
+      refreshNuxtData(`vendor-house-plans-${route.query.id}`)
+    ])
+  } catch {
+    toast.add({ title: 'Błąd', description: 'Nie udało się dodać planu.', color: 'error' })
+  } finally {
+    submitting.value = false
+  }
+}
 
 const { data: vendorData } = await useAsyncData(
   `vendor-${route.query.id}`,
@@ -123,6 +197,8 @@ const statusColor = (status: string) => {
         <UButton
           icon="i-lucide-plus"
           size="sm"
+          @click="slideoverOpen = true"
+          class="cursor-pointer"
         >
           Dodaj plan
         </UButton>
@@ -243,6 +319,7 @@ const statusColor = (status: string) => {
                 block
                 variant="soft"
                 icon="i-lucide-layout-template"
+                @click="slideoverOpen = true"
               >
                 Nowy plan domu
               </UButton>
@@ -285,4 +362,76 @@ const statusColor = (status: string) => {
       </div>
     </div>
   </UContainer>
+
+  <USlideover v-model:open="slideoverOpen" title="Nowy plan domu">
+    <template #body>
+      <div class="space-y-4 p-4">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-default">Tytuł *</label>
+          <UInput v-model="form.title" placeholder="np. Dom Parterowy 120" @input="formErrors.title = undefined" />
+          <p v-if="formErrors.title" class="text-xs text-error">{{ formErrors.title }}</p>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-default">Cena (PLN) *</label>
+          <UInput v-model="form.price" type="number" placeholder="2990" @input="formErrors.price = undefined" />
+          <p v-if="formErrors.price" class="text-xs text-error">{{ formErrors.price }}</p>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-default">Opis</label>
+          <UTextarea v-model="form.description" placeholder="Opis projektu..." :rows="3" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-default">URL zdjęcia</label>
+          <UInput v-model="form.img" placeholder="https://..." />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-default">Pow. domu (m²) *</label>
+            <UInput v-model="form.house_area" type="number" placeholder="120" @input="formErrors.house_area = undefined" />
+            <p v-if="formErrors.house_area" class="text-xs text-error">{{ formErrors.house_area }}</p>
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-default">Pow. kotłowni (m²)</label>
+            <UInput v-model="form.boiler_room_area" type="number" placeholder="8" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-default">Pokoje *</label>
+            <UInput v-model="form.rooms" type="number" placeholder="4" @input="formErrors.rooms = undefined" />
+            <p v-if="formErrors.rooms" class="text-xs text-error">{{ formErrors.rooms }}</p>
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-default">Łazienki i WC *</label>
+            <UInput v-model="form.bathrooms_and_wc" type="number" placeholder="2" @input="formErrors.bathrooms_and_wc = undefined" />
+            <p v-if="formErrors.bathrooms_and_wc" class="text-xs text-error">{{ formErrors.bathrooms_and_wc }}</p>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-default">Wymiary działki (np. 15x20) *</label>
+          <UInput v-model="form.plot_dimensions" placeholder="15x20" @input="formErrors.plot_dimensions = undefined" />
+          <p v-if="formErrors.plot_dimensions" class="text-xs text-error">{{ formErrors.plot_dimensions }}</p>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-default">Min. wymiary po adaptacji</label>
+          <UInput v-model="form.min_plot_dimensions_after_adaptation" placeholder="12x18" />
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2 p-4">
+        <UButton variant="outline" @click="slideoverOpen = false" :disabled="submitting">
+          Anuluj
+        </UButton>
+        <UButton :loading="submitting" @click="submitPlan">
+          Opublikuj plan
+        </UButton>
+      </div>
+    </template>
+  </USlideover>
 </template>

@@ -2,6 +2,7 @@ import { defineMiddlewares, validateAndTransformBody } from "@medusajs/framework
 import { z } from "@medusajs/framework/zod"
 import { CreateHousePlanSchema, UpdateHousePlanSchema } from "./admin/house-plans/validators"
 import { CreateVendorSchema, UpdateVendorSchema } from "./admin/vendors/validators"
+import { CreateVendorHousePlanSchema } from "./store/vendors/[id]/house-plans/validators"
 
 const HousePlanAdditionalDataSchema = z.object({
   title: z.string().min(1),
@@ -31,6 +32,11 @@ export default defineMiddlewares({
       additionalDataValidator: {
         house_plan: HousePlanAdditionalDataSchema.partial().nullish(),
       },
+    },
+    {
+      matcher: "/store/vendors/:id/house-plans",
+      method: "POST",
+      middlewares: [validateAndTransformBody(CreateVendorHousePlanSchema)],
     },
     {
       matcher: "/admin/house-plans",
