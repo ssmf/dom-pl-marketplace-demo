@@ -21,6 +21,7 @@ export type HousePlanApiResponse = {
   plot_dimensions: string
   min_plot_dimensions_after_adaptation: string | null
   vendor?: HousePlanVendor | null
+  variant_id?: string | null
 }
 
 export interface AppHousePlan {
@@ -36,4 +37,5 @@ export interface AppHousePlan {
   plotDimensions: string
   minPlotDimensionsAfterAdaptation: string | null
   vendor?: HousePlanVendor | null
+  variantId?: string | null
 }

@@ -35,7 +35,7 @@ export function useHousePlanFilters() {
 
   const applyFilters = (newFilters: HousePlanListParams) => {
     const query: Record<string, any> = { ...route.query, ...newFilters }
-    
+
     // Reset page on filter change
     delete query.page
 

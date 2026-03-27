@@ -25,6 +25,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       "vendor.email",
       "vendor.average_rating",
       "vendor.house_plans.id",
+      "product.variants.id",
     ],
     filters: { id: req.params.id },
   })
@@ -47,5 +48,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       }
     : null
 
-  res.json({ house_plan: { ...housePlan, vendor } })
+  const variantId = (housePlan as any).product?.variants?.[0]?.id || null
+
+  res.json({ house_plan: { ...housePlan, vendor, variant_id: variantId } })
 }

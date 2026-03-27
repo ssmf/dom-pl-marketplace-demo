@@ -62,7 +62,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
   const storeModuleService = container.resolve(Modules.STORE);
 
-  const countries = ["gb", "de", "dk", "se", "fr", "es", "it"];
+  const countries = ["pl", "gb", "de", "dk", "se", "fr", "es", "it"];
 
   logger.info("Seeding store data...");
   const [store] = await storeModuleService.listStores();
@@ -117,8 +117,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
     input: {
       regions: [
         {
-          name: "Europe",
-          currency_code: "eur",
+          name: "Polska & Europe",
+          currency_code: "pln",
           countries,
           payment_providers: ["pp_system_default"],
         },
@@ -267,6 +267,10 @@ export default async function seedDemoData({ container }: ExecArgs) {
             amount: 10,
           },
           {
+            currency_code: "pln",
+            amount: 10,
+          },
+          {
             region_id: region.id,
             amount: 10,
           },
@@ -302,6 +306,10 @@ export default async function seedDemoData({ container }: ExecArgs) {
           },
           {
             currency_code: "eur",
+            amount: 10,
+          },
+          {
+            currency_code: "pln",
             amount: 10,
           },
           {
