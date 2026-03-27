@@ -97,24 +97,37 @@ const handleCheckout = async () => {
       <!-- Cart Items -->
       <UCard>
         <ul class="divide-y divide-[var(--ui-border)]">
-          <li v-for="item in cart.items" :key="item.id" class="py-6 flex items-center justify-between">
+          <li
+            v-for="item in cart.items"
+            :key="item.id"
+            class="py-4 flex items-center justify-between gap-4"
+          >
             <NuxtLink
               :to="item.variant?.product?.house_plan?.id ? `/produkty/${item.variant.product.house_plan.id}` : undefined"
-              class="flex items-center gap-4 group"
-              :class="{ 'cursor-pointer': item.variant?.product?.house_plan?.id }"
+              class="flex items-center gap-4 group flex-1 min-w-0"
             >
-              <div class="size-16 bg-[var(--ui-bg-elevated)] rounded-md flex items-center justify-center overflow-hidden border border-[var(--ui-border)]">
+              <div class="size-20 shrink-0 bg-[var(--ui-bg-elevated)] rounded-lg flex items-center justify-center overflow-hidden border border-[var(--ui-border)]">
                 <NuxtImg
-                  v-if="item.variant?.product?.thumbnail"
-                  :src="item.variant.product.thumbnail"
+                  v-if="item.variant?.product?.house_plan?.img"
+                  :src="item.variant.product.house_plan.img"
                   class="w-full h-full object-cover"
                   alt="Miniatura projektu"
                 />
                 <UIcon v-else name="i-lucide-home" class="size-8 text-muted" />
               </div>
-              <div class="cursor-pointer">
-                <h3 class="font-semibold text-default group-hover:text-primary transition-colors">{{ item.title }}</h3>
+              <div class="min-w-0">
+                <h3 class="font-semibold text-default group-hover:text-primary transition-colors truncate">{{ item.title }}</h3>
                 <p class="text-sm text-muted">Ilość: {{ item.quantity }}</p>
+                <p
+                  v-if="item.variant?.product?.house_plan?.id"
+                  class="text-xs text-primary mt-0.5 flex items-center gap-1"
+                >
+                  <UIcon
+                    name="i-lucide-arrow-right"
+                    class="size-3"
+                  />
+                  Zobacz projekt
+                </p>
               </div>
             </NuxtLink>
             <div class="flex items-center gap-4">
