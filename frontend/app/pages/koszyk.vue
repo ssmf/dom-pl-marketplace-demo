@@ -6,8 +6,21 @@ const cartService = useCartService()
 const router = useRouter()
 const toast = useToast()
 const isCheckingOut = ref(false)
+const removingItemId = ref<string | null>(null)
 
 const { data: cart, refresh, pending } = await useAsyncData('cart', () => cartService.getCart())
+
+const handleRemove = async (lineItemId: string) => {
+  removingItemId.value = lineItemId
+  try {
+    await cartService.removeFromCart(lineItemId)
+    await refresh()
+  } catch {
+    toast.add({ title: 'Błąd', description: 'Nie udało się usunąć produktu.', color: 'error' })
+  } finally {
+    removingItemId.value = null
+  }
+}
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('pl-PL', {
@@ -71,8 +84,18 @@ const handleCheckout = async () => {
                 <p class="text-sm text-muted">Ilość: {{ item.quantity }}</p>
               </div>
             </div>
-            <div class="font-bold text-lg">
-              {{ formatPrice(item.unit_price) }}
+            <div class="flex items-center gap-4">
+              <span class="font-bold text-lg">{{ formatPrice(item.unit_price) }}</span>
+              <UButton
+                color="error"
+                variant="ghost"
+                icon="i-lucide-trash-2"
+                size="sm"
+                class="cursor-pointer"
+                :loading="removingItemId === item.id"
+                :disabled="removingItemId !== null"
+                @click="handleRemove(item.id)"
+              />
             </div>
           </li>
         </ul>
@@ -89,6 +112,7 @@ const handleCheckout = async () => {
           size="xl"
           icon="i-lucide-check-circle"
           :loading="isCheckingOut"
+          class="cursor-pointer"
           @click="handleCheckout"
         >
           Złóż zamówienie

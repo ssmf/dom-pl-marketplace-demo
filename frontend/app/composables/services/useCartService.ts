@@ -49,6 +49,13 @@ export function useCartService() {
     return updatedCart
   }
   
+  async function removeFromCart(lineItemId: string) {
+    const currentCart = await getCart()
+    const { cart: updatedCart } = await sdk.store.cart.deleteLineItem(currentCart.id, lineItemId)
+    cart.value = updatedCart
+    return updatedCart
+  }
+
   async function completeDummyCheckout() {
     const currentCart = await getCart()
     if (!currentCart || !currentCart.items?.length) return
@@ -93,6 +100,7 @@ export function useCartService() {
     cart,
     getCart,
     addToCart,
+    removeFromCart,
     completeDummyCheckout
   }
 }
