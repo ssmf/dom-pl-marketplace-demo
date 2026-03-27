@@ -75,7 +75,11 @@ const handleCheckout = async () => {
       <UCard>
         <ul class="divide-y divide-[var(--ui-border)]">
           <li v-for="item in cart.items" :key="item.id" class="py-6 flex items-center justify-between">
-            <div class="flex items-center gap-4">
+            <NuxtLink
+              :to="item.variant?.product?.house_plan?.id ? `/produkty/${item.variant.product.house_plan.id}` : undefined"
+              class="flex items-center gap-4 group"
+              :class="{ 'cursor-pointer': item.variant?.product?.house_plan?.id }"
+            >
               <div class="size-16 bg-[var(--ui-bg-elevated)] rounded-md flex items-center justify-center overflow-hidden border border-[var(--ui-border)]">
                 <NuxtImg
                   v-if="item.variant?.product?.thumbnail"
@@ -86,10 +90,10 @@ const handleCheckout = async () => {
                 <UIcon v-else name="i-lucide-home" class="size-8 text-muted" />
               </div>
               <div>
-                <h3 class="font-semibold text-default">{{ item.title }}</h3>
+                <h3 class="font-semibold text-default group-hover:text-primary transition-colors">{{ item.title }}</h3>
                 <p class="text-sm text-muted">Ilość: {{ item.quantity }}</p>
               </div>
-            </div>
+            </NuxtLink>
             <div class="flex items-center gap-4">
               <span class="font-bold text-lg">{{ formatPrice(item.unit_price) }}</span>
               <UButton

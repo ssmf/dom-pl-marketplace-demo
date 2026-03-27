@@ -11,7 +11,7 @@ export function useCartService() {
     if (cartIdCookie.value) {
       try {
         const response = await sdk.store.cart.retrieve(cartIdCookie.value, {
-            fields: '*items,*items.variant,*items.variant.product'
+            fields: '*items,*items.variant,*items.variant.product,*items.variant.product.house_plan'
         })
         cart.value = response.cart
         return cart.value
