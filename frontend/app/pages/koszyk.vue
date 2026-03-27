@@ -77,7 +77,13 @@ const handleCheckout = async () => {
           <li v-for="item in cart.items" :key="item.id" class="py-6 flex items-center justify-between">
             <div class="flex items-center gap-4">
               <div class="size-16 bg-[var(--ui-bg-elevated)] rounded-md flex items-center justify-center overflow-hidden border border-[var(--ui-border)]">
-                <UIcon name="i-lucide-home" class="size-8 text-muted" />
+                <NuxtImg
+                  v-if="item.variant?.product?.thumbnail"
+                  :src="item.variant.product.thumbnail"
+                  class="w-full h-full object-cover"
+                  alt="Miniatura projektu"
+                />
+                <UIcon v-else name="i-lucide-home" class="size-8 text-muted" />
               </div>
               <div>
                 <h3 class="font-semibold text-default">{{ item.title }}</h3>
