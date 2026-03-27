@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { useRoute, useAsyncData, createError } from '#imports'
+import { useRoute, useAsyncData, createError, useRouter } from '#imports'
 import { useHousePlanService } from '~/composables/services/useHousePlanService'
+import { useCartService } from '~/composables/services/useCartService'
 
 const route = useRoute()
+const router = useRouter()
 const id = route.params.id as string
 
 const housePlanService = useHousePlanService()
+const cartService = useCartService()
 
 const { data: plan, error } = await useAsyncData(
   `house-plan-${id}`,
@@ -18,6 +21,25 @@ if (error.value || !plan.value) {
     statusMessage: 'Projekt nie znaleziony',
     fatal: true
   })
+}
+
+const isAddingToCart = ref(false)
+
+const handleAddToCart = async () => {
+  if (!plan.value?.variantId) {
+    console.error('No variant ID found for this house plan.')
+    return
+  }
+  
+  isAddingToCart.value = true
+  try {
+    await cartService.addToCart(plan.value.variantId)
+    router.push('/koszyk')
+  } catch (err) {
+    console.error('Failed to add to cart:', err)
+  } finally {
+    isAddingToCart.value = false
+  }
 }
 
 const formatPrice = (price: number) => {
@@ -163,6 +185,8 @@ const formatPrice = (price: number) => {
               block
               size="lg"
               icon="i-lucide-shopping-cart"
+              :loading="isAddingToCart"
+              @click="handleAddToCart"
             >
               Kup projekt
             </UButton>
