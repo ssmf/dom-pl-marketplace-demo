@@ -7,7 +7,6 @@ export function mapToAppVendor(raw: any): AppVendor {
     first_name: raw.first_name,
     last_name: raw.last_name,
     email: raw.email,
-    published_plans_count: raw.published_plans_count ?? 0,
     house_plans_count: raw.house_plans_count ?? 0,
     revenue: raw.revenue ?? 0,
     average_rating: raw.average_rating ?? null,

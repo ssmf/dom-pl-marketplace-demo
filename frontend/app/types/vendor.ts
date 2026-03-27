@@ -4,7 +4,6 @@ export interface AppVendor {
   first_name: string
   last_name: string
   email: string
-  published_plans_count: number
   house_plans_count: number
   revenue: number
   average_rating: number | null
@@ -17,7 +16,6 @@ export type VendorApiResponse = {
   first_name: string
   last_name: string
   email: string
-  published_plans_count: number
   house_plans_count: number
   revenue: number
   average_rating: number | null

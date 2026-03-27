@@ -27,7 +27,6 @@ type Vendor = {
   first_name: string
   last_name: string
   email: string
-  published_plans_count: number
   house_plans_count: number
   revenue: number
   average_rating: number | null
@@ -189,14 +188,6 @@ const getColumns = () => [
     header: "E-mail",
     cell: ({ getValue }) => (
       <Text size="small" leading="compact" className="text-ui-fg-subtle">
-        {getValue()}
-      </Text>
-    ),
-  }),
-  columnHelper.accessor("published_plans_count", {
-    header: "Plany",
-    cell: ({ getValue }) => (
-      <Text size="small" leading="compact">
         {getValue()}
       </Text>
     ),

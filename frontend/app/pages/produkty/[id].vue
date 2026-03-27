@@ -75,6 +75,34 @@ const formatPrice = (price: number) => {
           <p class="text-3xl font-bold text-primary">{{ formatPrice(plan?.price ?? 0) }}</p>
         </div>
 
+        <!-- Vendor Card -->
+        <UCard v-if="plan?.vendor">
+          <template #header>
+            <h3 class="text-lg font-semibold">Sprzedawca</h3>
+          </template>
+
+          <div class="flex items-start gap-4">
+            <UAvatar
+              :alt="plan.vendor.company_name"
+              size="lg"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-default truncate">{{ plan.vendor.company_name }}</p>
+              <p class="text-sm text-muted">{{ plan.vendor.first_name }} {{ plan.vendor.last_name }}</p>
+              <div class="flex items-center gap-3 mt-2">
+                <div v-if="plan.vendor.average_rating" class="flex items-center gap-1 text-sm text-muted">
+                  <UIcon name="i-lucide-star" class="size-4 text-yellow-500" />
+                  <span>{{ plan.vendor.average_rating.toFixed(1) }}</span>
+                </div>
+                <div class="flex items-center gap-1 text-sm text-muted">
+                  <UIcon name="i-lucide-layout-grid" class="size-4" />
+                  <span>{{ plan.vendor.house_plans_count }} {{ plan.vendor.house_plans_count === 1 ? 'projekt' : 'projektów' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </UCard>
+
         <UCard>
           <template #header>
             <h3 class="text-lg font-semibold">Szczegóły projektu</h3>

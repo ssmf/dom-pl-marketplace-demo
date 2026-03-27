@@ -1,3 +1,13 @@
+export type HousePlanVendor = {
+  id: string
+  company_name: string
+  first_name: string
+  last_name: string
+  email: string
+  average_rating: number | null
+  house_plans_count: number
+}
+
 export type HousePlanApiResponse = {
   id: string
   title: string
@@ -10,6 +20,7 @@ export type HousePlanApiResponse = {
   bathrooms_and_wc: number
   plot_dimensions: string
   min_plot_dimensions_after_adaptation: string | null
+  vendor?: HousePlanVendor | null
 }
 
 export interface AppHousePlan {
@@ -24,4 +35,5 @@ export interface AppHousePlan {
   bathroomsAndWc: number
   plotDimensions: string
   minPlotDimensionsAfterAdaptation: string | null
+  vendor?: HousePlanVendor | null
 }
