@@ -36,7 +36,10 @@ type HousePlan = {
   rooms: number
   bathrooms_and_wc: number
   plot_dimensions: string
+<<<<<<< HEAD
   product?: { id: string } | null
+=======
+>>>>>>> f2dc393 (create vendors details in admin panel)
 }
 
 const columnHelper = createDataTableColumnHelper<HousePlan>()
@@ -131,10 +134,13 @@ const VendorDetailPage = () => {
     getRowId: (row) => row.id,
     rowCount: housePlans.length,
     isLoading: plansLoading,
+<<<<<<< HEAD
     onRowClick: (_, row) => {
       const productId = (row as any).original?.product?.id
       if (productId) navigate(`/products/${productId}`)
     },
+=======
+>>>>>>> f2dc393 (create vendors details in admin panel)
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
