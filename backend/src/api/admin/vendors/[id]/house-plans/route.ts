@@ -5,6 +5,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
+<<<<<<< HEAD
   // Step 1: get house plan IDs linked to this vendor
   const { data: vendors } = await query.graph({
     entity: "vendor",
@@ -37,4 +38,24 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   })
 
   res.json({ house_plans: housePlans })
+=======
+  const { data: vendors } = await query.graph({
+    entity: "vendor",
+    fields: [
+      "id",
+      "house_plans.id",
+      "house_plans.title",
+      "house_plans.price",
+      "house_plans.img",
+      "house_plans.house_area",
+      "house_plans.boiler_room_area",
+      "house_plans.rooms",
+      "house_plans.bathrooms_and_wc",
+      "house_plans.plot_dimensions",
+    ],
+    filters: { id },
+  })
+
+  res.json({ house_plans: vendors[0]?.house_plans ?? [] })
+>>>>>>> f2dc3937df0d9bf6da12cee8b26bdde84e0ebc63
 }
