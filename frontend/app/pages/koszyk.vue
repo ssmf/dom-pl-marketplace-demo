@@ -1,14 +1,29 @@
 <script setup lang="ts">
-import { useAsyncData, useRouter, ref } from '#imports'
+import { useAsyncData, useRouter, ref, computed } from '#imports'
 import { useCartService } from '~/composables/services/useCartService'
+import { useCustomerService } from '~/composables/services/useCustomerService'
 
 const cartService = useCartService()
+const customerService = useCustomerService()
 const router = useRouter()
 const toast = useToast()
 const isCheckingOut = ref(false)
 const removingItemId = ref<string | null>(null)
+const selectedCustomerId = ref<string | undefined>(undefined)
 
 const { data: cart, refresh, pending } = await useAsyncData('cart', () => cartService.getCart())
+const { data: customersData } = useAsyncData('checkout-customers', () => customerService.listCustomers())
+
+const customerOptions = computed(() =>
+  (customersData.value?.data ?? []).map(c => ({
+    label: `${c.first_name} ${c.last_name} (${c.email})`,
+    value: c.id
+  }))
+)
+
+const selectedCustomer = computed(() =>
+  customersData.value?.data.find(c => c.id === selectedCustomerId.value)
+)
 
 const handleRemove = async (lineItemId: string) => {
   removingItemId.value = lineItemId
@@ -31,9 +46,17 @@ const formatPrice = (price: number) => {
 }
 
 const handleCheckout = async () => {
+  if (!selectedCustomerId.value) {
+    toast.add({ title: 'Wybierz konto', description: 'Wybierz konto klienta przed złożeniem zamówienia.', color: 'warning' })
+    return
+  }
   isCheckingOut.value = true
   try {
-    await cartService.completeDummyCheckout()
+    await cartService.completeDummyCheckout(
+      selectedCustomer.value
+        ? { email: selectedCustomer.value.email, first_name: selectedCustomer.value.first_name, last_name: selectedCustomer.value.last_name }
+        : undefined
+    )
     toast.add({
       title: 'Sukces',
       description: 'Zamówienie zostało złożone pomyślnie!',
@@ -89,7 +112,7 @@ const handleCheckout = async () => {
                 />
                 <UIcon v-else name="i-lucide-home" class="size-8 text-muted" />
               </div>
-              <div>
+              <div class="cursor-pointer">
                 <h3 class="font-semibold text-default group-hover:text-primary transition-colors">{{ item.title }}</h3>
                 <p class="text-sm text-muted">Ilość: {{ item.quantity }}</p>
               </div>
@@ -117,11 +140,23 @@ const handleCheckout = async () => {
           <span class="text-muted mr-4">Suma częściowa:</span>
           <span class="font-bold text-2xl">{{ formatPrice(cart.subtotal || 0) }}</span>
         </div>
-        
+
+        <div class="w-full max-w-sm flex flex-col gap-2">
+          <label class="text-sm text-muted font-medium">Konto klienta (demo)</label>
+          <USelect
+            v-model="selectedCustomerId"
+            :items="customerOptions"
+            placeholder="Wybierz klienta..."
+            value-key="value"
+            label-key="label"
+          />
+        </div>
+
         <UButton
           size="xl"
           icon="i-lucide-check-circle"
           :loading="isCheckingOut"
+          :disabled="!selectedCustomerId"
           class="cursor-pointer"
           @click="handleCheckout"
         >

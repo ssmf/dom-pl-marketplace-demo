@@ -56,20 +56,22 @@ export function useCartService() {
     return updatedCart
   }
 
-  async function completeDummyCheckout() {
+  type CheckoutCustomer = { email: string, first_name: string, last_name: string }
+
+  async function completeDummyCheckout(customer?: CheckoutCustomer) {
     const currentCart = await getCart()
     if (!currentCart || !currentCart.items?.length) return
-    
+
     // 1. Set email and dummy address
     await sdk.store.cart.update(currentCart.id, {
-      email: "test@example.com",
+      email: customer?.email ?? 'demo@example.com',
       shipping_address: {
-        first_name: "Test",
-        last_name: "User",
-        address_1: "Test Street 1",
-        city: "Test City",
-        country_code: "pl",
-        postal_code: "00-000"
+        first_name: customer?.first_name ?? 'Demo',
+        last_name: customer?.last_name ?? 'User',
+        address_1: 'Test Street 1',
+        city: 'Test City',
+        country_code: 'pl',
+        postal_code: '00-000'
       }
     })
 

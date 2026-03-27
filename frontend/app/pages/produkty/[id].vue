@@ -186,6 +186,7 @@ const formatPrice = (price: number) => {
               size="lg"
               icon="i-lucide-shopping-cart"
               :loading="isAddingToCart"
+              class="cursor-pointer"
               @click="handleAddToCart"
             >
               Kup projekt
