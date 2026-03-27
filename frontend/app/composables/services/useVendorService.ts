@@ -47,6 +47,12 @@ export function useVendorService() {
     }
   }
 
+  async function deleteVendorHousePlan(vendorId: string, planId: string): Promise<void> {
+    await sdk.client.fetch(`/store/vendors/${vendorId}/house-plans/${planId}`, {
+      method: 'DELETE',
+    })
+  }
+
   async function createVendorHousePlan(vendorId: string, data: {
     title: string
     price: number
@@ -66,5 +72,5 @@ export function useVendorService() {
     return mapToAppHousePlan(response.house_plan)
   }
 
-  return { listVendors, getVendor, getVendorHousePlans, createVendorHousePlan }
+  return { listVendors, getVendor, getVendorHousePlans, createVendorHousePlan, deleteVendorHousePlan }
 }

@@ -39,7 +39,7 @@ const emptyForm = (): PlanForm => ({
 
 const route = useRoute()
 const toast = useToast()
-const { getVendor, getVendorHousePlans, createVendorHousePlan } = useVendorService()
+const { getVendor, getVendorHousePlans, createVendorHousePlan, deleteVendorHousePlan } = useVendorService()
 
 const slideoverOpen = ref(false)
 const submitting = ref(false)
@@ -145,10 +145,25 @@ const { data: housePlansData } = await useAsyncData(
 
 const myPlans = computed(() =>
   (housePlansData.value ?? []).map(plan => ({
+    id: plan.id,
     title: plan.title,
     price: `${plan.price.toLocaleString('pl-PL')} zł`
   }))
 )
+
+async function deletePlan(planId: string) {
+  if (!confirm('Czy na pewno chcesz usunąć ten plan?')) return
+  try {
+    await deleteVendorHousePlan(route.query.id as string, planId)
+    toast.add({ title: 'Plan usunięty', color: 'success' })
+    await Promise.all([
+      refreshNuxtData(`vendor-${route.query.id}`),
+      refreshNuxtData(`vendor-house-plans-${route.query.id}`)
+    ])
+  } catch {
+    toast.add({ title: 'Błąd', description: 'Nie udało się usunąć planu.', color: 'error' })
+  }
+}
 
 const orderColumns: TableColumn<Order>[] = [
   { accessorKey: 'id', header: 'Nr' },
@@ -292,7 +307,7 @@ const statusColor = (status: string) => {
             <ul class="divide-y divide-default">
               <li
                 v-for="plan in myPlans"
-                :key="plan.title"
+                :key="plan.id"
                 class="flex items-center justify-between py-3 first:pt-0 last:pb-0"
               >
                 <div class="min-w-0">
@@ -303,6 +318,13 @@ const statusColor = (status: string) => {
                     {{ plan.price }}
                   </p>
                 </div>
+                <UButton
+                  variant="ghost"
+                  color="error"
+                  icon="i-lucide-trash-2"
+                  size="xs"
+                  @click="deletePlan(plan.id)"
+                />
               </li>
             </ul>
           </UCard>
