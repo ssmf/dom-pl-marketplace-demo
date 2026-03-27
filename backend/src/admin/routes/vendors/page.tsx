@@ -19,6 +19,7 @@ import {
 } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { sdk } from "../../lib/client"
 
 type Vendor = {
@@ -239,6 +240,7 @@ const getColumns = () => [
 ]
 
 const VendorsPage = () => {
+  const navigate = useNavigate()
   const [searchValue, setSearchValue] = useState("")
   const [pagination, setPagination] = useState<DataTablePaginationState>({
     pageIndex: 0,
@@ -269,6 +271,7 @@ const VendorsPage = () => {
     getRowId: (row) => row.id,
     rowCount: filtered.length,
     isLoading,
+    onRowClick: (_, row) => navigate(`/vendors/${row.id}`),
     search: {
       state: searchValue,
       onSearchChange: (val) => {
