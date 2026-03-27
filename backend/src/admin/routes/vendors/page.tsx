@@ -271,6 +271,7 @@ const VendorsPage = () => {
     getRowId: (row) => row.id,
     rowCount: filtered.length,
     isLoading,
+    onRowClick: (_, row) => navigate(`/vendors/${(row as any).original?.id ?? (row as any).id}`),
     search: {
       state: searchValue,
       onSearchChange: (val) => {
