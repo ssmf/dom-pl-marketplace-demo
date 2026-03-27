@@ -39,7 +39,11 @@ type HousePlan = {
 <<<<<<< HEAD
   product?: { id: string } | null
 =======
+<<<<<<< HEAD
 >>>>>>> f2dc393 (create vendors details in admin panel)
+=======
+>>>>>>> f2dc3937df0d9bf6da12cee8b26bdde84e0ebc63
+>>>>>>> f7b495bce5480a3af457d9fd5d62c136281b0565
 }
 
 const columnHelper = createDataTableColumnHelper<HousePlan>()
@@ -140,7 +144,11 @@ const VendorDetailPage = () => {
       if (productId) navigate(`/products/${productId}`)
     },
 =======
+<<<<<<< HEAD
 >>>>>>> f2dc393 (create vendors details in admin panel)
+=======
+>>>>>>> f2dc3937df0d9bf6da12cee8b26bdde84e0ebc63
+>>>>>>> f7b495bce5480a3af457d9fd5d62c136281b0565
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,

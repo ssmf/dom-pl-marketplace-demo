@@ -57,5 +57,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   })
 
   res.json({ house_plans: vendors[0]?.house_plans ?? [] })
+<<<<<<< HEAD
 >>>>>>> f2dc393 (create vendors details in admin panel)
+=======
+>>>>>>> f2dc3937df0d9bf6da12cee8b26bdde84e0ebc63
+>>>>>>> f7b495bce5480a3af457d9fd5d62c136281b0565
 }
