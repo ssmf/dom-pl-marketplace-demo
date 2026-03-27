@@ -1,5 +1,6 @@
 import { ExecArgs } from "@medusajs/framework/types"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules, ProductStatus } from "@medusajs/framework/utils"
+import { createProductsWorkflow, updateProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { HOUSE_PLAN_MODULE } from "../modules/house_plan"
 import { VENDOR_MODULE } from "../modules/vendor"
 import VendorModuleService from "../modules/vendor/service"
@@ -75,27 +76,102 @@ const PLANS = [
 export default async function seedHousePlans({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   const housePlanService = container.resolve(HOUSE_PLAN_MODULE)
+  const link = container.resolve(ContainerRegistrationKeys.LINK)
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
-  logger.info("Seeding house plans...")
+  logger.info('Seeding house plans...')
 
   const existing = await housePlanService.listHousePlans()
 
   let allPlans = existing
   if (existing.length > 0) {
-    logger.info(
-      `Skipping creation — ${existing.length} house plan(s) already exist in the database.`
-    )
+    logger.info(`Skipping creation — ${existing.length} house plan(s) already exist in the database.`)
   } else {
     allPlans = await housePlanService.createHousePlans(PLANS)
     logger.info(`Seeded ${PLANS.length} house plans successfully.`)
   }
 
-  const link = container.resolve(ContainerRegistrationKeys.LINK)
+  // Create Medusa Products and link them to house plans
+  logger.info('Linking house plans to Medusa products...')
+
+  const { data: salesChannels } = await query.graph({
+    entity: 'sales_channel',
+    fields: ['id'],
+  })
+  const salesChannelId = salesChannels[0]?.id
+
+  for (const plan of allPlans) {
+    const { data: linked } = await query.graph({
+      entity: 'house_plan',
+      fields: ['id', 'product.id'],
+      filters: { id: plan.id },
+    })
+
+    if (linked[0]?.product?.id) {
+      logger.info(`House plan "${plan.title}" already linked to a product, skipping.`)
+      continue
+    }
+
+    const { result: products } = await createProductsWorkflow(container).run({
+      input: {
+        products: [
+          {
+            title: plan.title,
+            status: ProductStatus.PUBLISHED,
+            thumbnail: plan.img ?? undefined,
+            options: [{ title: 'Wersja', values: ['Dokumentacja'] }],
+            variants: [
+              {
+                title: 'Dokumentacja',
+                options: { Wersja: 'Dokumentacja' },
+                prices: [{ currency_code: 'pln', amount: plan.price }],
+                manage_inventory: false,
+              },
+            ],
+            ...(salesChannelId ? { sales_channels: [{ id: salesChannelId }] } : {}),
+          },
+        ],
+      },
+    })
+
+    await link.create({
+      [Modules.PRODUCT]: { product_id: products[0].id },
+      [HOUSE_PLAN_MODULE]: { house_plan_id: plan.id },
+    })
+
+    logger.info(`Linked "${plan.title}" to product ${products[0].id}`)
+  }
+
+
+  // Sync thumbnails for products that are already linked but may be missing a thumbnail
+  logger.info('Syncing thumbnails for existing linked products...')
+  for (const plan of allPlans) {
+    if (!plan.img) continue
+    const { data: linked } = await query.graph({
+      entity: 'house_plan',
+      fields: ['id', 'product.id', 'product.thumbnail'],
+      filters: { id: plan.id },
+    })
+    const linkedProduct = linked[0]?.product as any
+    if (linkedProduct?.id && !linkedProduct?.thumbnail) {
+      await updateProductsWorkflow(container).run({
+        input: {
+          selector: { id: linkedProduct.id },
+          update: { thumbnail: plan.img },
+        },
+      })
+      logger.info(`Updated thumbnail for product ${linkedProduct.id}`)
+    }
+  }
+  logger.info('Thumbnails synced.')
+    logger.info('Finished linking house plans to Medusa products.')
+
+  // Link house plans to vendors
   const vendorService: VendorModuleService = container.resolve(VENDOR_MODULE)
   const vendors = await vendorService.listVendors()
 
   if (vendors.length >= 2) {
-    logger.info("Linking house plans to vendors...")
+    logger.info('Linking house plans to vendors...')
     const half = Math.ceil(allPlans.length / 2)
     for (const plan of allPlans.slice(0, half)) {
       await link.create({
@@ -109,6 +185,6 @@ export default async function seedHousePlans({ container }: ExecArgs) {
         [HOUSE_PLAN_MODULE]: { house_plan_id: plan.id },
       })
     }
-    logger.info("House plans linked to vendors successfully.")
+    logger.info('House plans linked to vendors successfully.')
   }
 }

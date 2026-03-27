@@ -12,6 +12,7 @@ export function mapToAppHousePlan(raw: HousePlanApiResponse): AppHousePlan {
     rooms: Number(raw.rooms) || 0,
     bathroomsAndWc: Number(raw.bathrooms_and_wc) || 0,
     plotDimensions: raw.plot_dimensions || '',
-    minPlotDimensionsAfterAdaptation: raw.min_plot_dimensions_after_adaptation ?? null
+    minPlotDimensionsAfterAdaptation: raw.min_plot_dimensions_after_adaptation ?? null,
+    vendor: raw.vendor ?? null
   }
 }

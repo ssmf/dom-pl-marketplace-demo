@@ -51,16 +51,6 @@
           "nullable": false,
           "mappedType": "text"
         },
-        "published_plans_count": {
-          "name": "published_plans_count",
-          "type": "integer",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "0",
-          "mappedType": "integer"
-        },
         "revenue": {
           "name": "revenue",
           "type": "numeric",
@@ -70,16 +60,6 @@
           "nullable": false,
           "default": "0",
           "mappedType": "decimal"
-        },
-        "orders_count": {
-          "name": "orders_count",
-          "type": "integer",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "0",
-          "mappedType": "integer"
         },
         "average_rating": {
           "name": "average_rating",
