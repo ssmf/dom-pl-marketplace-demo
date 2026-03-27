@@ -1,6 +1,11 @@
 <script setup lang="ts">
 const searchQuery = ref('')
 const isSearchOpen = ref(false)
+
+const cart = useState<any>('cart')
+const cartCount = computed(() =>
+  cart.value?.items?.reduce((sum: number, item: any) => sum + (item.quantity ?? 1), 0) ?? 0
+)
 </script>
 
 <template>
@@ -42,14 +47,22 @@ const isSearchOpen = ref(false)
           aria-label="Konto"
         />
 
-        <UButton
-          to="/koszyk"
-          icon="i-lucide-shopping-bag"
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          aria-label="Koszyk"
-        />
+        <div class="relative">
+          <UButton
+            to="/koszyk"
+            icon="i-lucide-shopping-bag"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            aria-label="Koszyk"
+          />
+          <span
+            v-if="cartCount > 0"
+            class="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center pointer-events-none"
+          >
+            {{ cartCount > 9 ? '9+' : cartCount }}
+          </span>
+        </div>
       </nav>
     </UContainer>
   </header>
