@@ -3,6 +3,7 @@ export type AppOrderItem = {
   title: string
   quantity: number
   unit_price: number
+  vendor_name?: string | null
 }
 
 export type AppOrder = {

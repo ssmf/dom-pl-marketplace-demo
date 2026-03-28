@@ -5,7 +5,8 @@ import type { AppOrder } from '~/types/order'
 
 type OrderRow = {
   id: string
-  plan: string
+  orderId: string
+  products: string
   date: string
   status: string
   amount: string
@@ -61,33 +62,42 @@ const statusLabel = (status: string) => {
     completed: 'Opłacone',
     pending: 'Oczekuje',
     cancelled: 'Anulowane',
+    canceled: 'Anulowane',
     requires_action: 'Wymaga akcji'
   }
   return map[status] ?? status
 }
 
 const recentOrders = computed<OrderRow[]>(() =>
-  (ordersData.value ?? []).slice(0, 10).map((o: AppOrder) => ({
-    id: '#' + o.id.slice(-6).toUpperCase(),
-    plan: o.items[0]?.title ?? '—',
-    date: new Date(o.created_at).toLocaleDateString('pl-PL'),
-    status: statusLabel(o.status),
-    amount: formatPLN(o.total)
-  }))
+  (ordersData.value ?? []).slice(0, 10).map((o: AppOrder) => {
+    const itemTotal = o.items.reduce((sum, i) => sum + Number(i.unit_price) * Number(i.quantity), 0)
+    const total = Number(o.total)
+    return {
+      id: '#' + o.id.slice(-6).toUpperCase(),
+      orderId: o.id,
+      products: o.items.length === 1
+        ? (o.items[0]?.title ?? '—')
+        : `${o.items.length} produkty`,
+      date: new Date(o.created_at).toLocaleDateString('pl-PL'),
+      status: statusLabel(o.status),
+      amount: formatPLN(total > 0 ? total : itemTotal)
+    }
+  })
 )
 
 const orderColumns: TableColumn<OrderRow>[] = [
   { accessorKey: 'id', header: 'Nr' },
-  { accessorKey: 'plan', header: 'Plan' },
+  { accessorKey: 'products', header: 'Produkt(y)' },
   { accessorKey: 'date', header: 'Data' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'amount', header: 'Kwota' }
+  { accessorKey: 'amount', header: 'Kwota' },
+  { accessorKey: 'actions', header: '' }
 ]
 
 const statusColor = (status: string) => {
   if (status === 'Opłacone') return 'success'
   if (status === 'Oczekuje') return 'warning'
-  if (status === 'Anulowane') return 'error'
+  if (status === 'Anulowane' || status === 'canceled' || status === 'cancelled') return 'error'
   return 'neutral'
 }
 </script>
@@ -176,7 +186,7 @@ const statusColor = (status: string) => {
             :columns="orderColumns"
             :data="recentOrders"
           >
-            <template #status="{ row }">
+            <template #status-cell="{ row }">
               <UBadge
                 :color="statusColor(row.original.status)"
                 variant="subtle"
@@ -185,10 +195,20 @@ const statusColor = (status: string) => {
                 {{ row.original.status }}
               </UBadge>
             </template>
-            <template #amount="{ row }">
+            <template #amount-cell="{ row }">
               <span class="font-medium text-default">
                 {{ row.original.amount }}
               </span>
+            </template>
+            <template #actions-cell="{ row }">
+              <UButton
+                variant="ghost"
+                size="xs"
+                icon="i-lucide-eye"
+                :to="`/konto/klient/zamowienie/${row.original.orderId}?customerId=${route.query.id}`"
+              >
+                Szczegóły
+              </UButton>
             </template>
           </UTable>
         </UCard>
