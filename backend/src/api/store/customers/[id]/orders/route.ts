@@ -46,7 +46,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     .filter(Boolean)
 
   const productToTitle: Record<string, string> = {}
-  const productToVendor: Record<string, string> = {}
+  const productToVendorName: Record<string, string> = {}
+  const productToVendorId: Record<string, string> = {}
+  const productToHousePlanId: Record<string, string> = {}
   const productToPrice: Record<string, number> = {}
 
   if (productIds.length) {
@@ -57,7 +59,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     for (const hp of housePlans as any[]) {
       if (hp.product?.id) {
         productToTitle[hp.product.id] = hp.title
-        productToVendor[hp.product.id] = hp.vendor?.company_name ?? null
+        productToVendorName[hp.product.id] = hp.vendor?.company_name ?? null
+        productToVendorId[hp.product.id] = hp.vendor?.id ?? null
+        productToHousePlanId[hp.product.id] = hp.id
         productToPrice[hp.product.id] = toNum(hp.price)
       }
     }
@@ -70,7 +74,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       title: productToTitle[item.product_id] ?? item.title ?? "",
       quantity: toNum(item.quantity),
       unit_price: toNum(item.unit_price) || productToPrice[item.product_id] || 0,
-      vendor_name: productToVendor[item.product_id] ?? null,
+      vendor_name: productToVendorName[item.product_id] ?? null,
+      vendor_id: productToVendorId[item.product_id] ?? null,
+      house_plan_id: productToHousePlanId[item.product_id] ?? null,
     }))
     const itemsTotal = items.reduce((sum: number, i: any) => sum + i.unit_price * i.quantity, 0)
     return {

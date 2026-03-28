@@ -125,11 +125,32 @@ const backUrl = customerId ? `/konto/klient?id=${customerId}` : '/konto/klient'
             class="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0"
           >
             <div class="space-y-1 min-w-0">
-              <p class="font-medium text-default truncate">
+              <NuxtLink
+                v-if="item.house_plan_id"
+                :to="`/produkty/${item.house_plan_id}`"
+                class="font-medium text-default truncate hover:text-primary transition-colors"
+              >
+                {{ item.title }}
+              </NuxtLink>
+              <p
+                v-else
+                class="font-medium text-default truncate"
+              >
                 {{ item.title }}
               </p>
+              <NuxtLink
+                v-if="item.vendor_name && item.vendor_id"
+                :to="`/vendorzy/${item.vendor_id}`"
+                class="text-sm text-muted flex items-center gap-1 hover:text-primary transition-colors w-fit"
+              >
+                <UIcon
+                  name="i-lucide-store"
+                  class="size-3.5 shrink-0"
+                />
+                {{ item.vendor_name }}
+              </NuxtLink>
               <p
-                v-if="item.vendor_name"
+                v-else-if="item.vendor_name"
                 class="text-sm text-muted flex items-center gap-1"
               >
                 <UIcon
