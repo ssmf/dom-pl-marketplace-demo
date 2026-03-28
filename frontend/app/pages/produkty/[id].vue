@@ -123,6 +123,18 @@ const formatPrice = (price: number) => {
               </div>
             </div>
           </div>
+
+          <template #footer>
+            <UButton
+              :to="`/vendorzy/${plan.vendor.id}`"
+              variant="outline"
+              color="neutral"
+              icon="i-lucide-store"
+              block
+            >
+              Zobacz profil sprzedawcy
+            </UButton>
+          </template>
         </UCard>
 
         <UCard>
@@ -186,6 +198,7 @@ const formatPrice = (price: number) => {
               size="lg"
               icon="i-lucide-shopping-cart"
               :loading="isAddingToCart"
+              class="cursor-pointer"
               @click="handleAddToCart"
             >
               Kup projekt
