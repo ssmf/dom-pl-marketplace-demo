@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { useCustomerService } from '~/composables/services/useCustomerService'
+import type { AppOrder } from '~/types/order'
 
-type Order = {
+type OrderRow = {
   id: string
   plan: string
   date: string
@@ -11,11 +12,17 @@ type Order = {
 }
 
 const route = useRoute()
-const { getCustomer } = useCustomerService()
+const { getCustomer, getCustomerOrders } = useCustomerService()
 
 const { data: customerData } = await useAsyncData(
   `customer-${route.query.id}`,
   () => getCustomer(route.query.id as string),
+  { server: false }
+)
+
+const { data: ordersData, pending: ordersPending } = useAsyncData(
+  `customer-orders-${route.query.id}`,
+  () => getCustomerOrders(route.query.id as string),
   { server: false }
 )
 
@@ -24,32 +31,52 @@ const customer = computed(() => ({
   email: customerData.value?.email ?? '—',
   since: customerData.value?.created_at
     ? new Date(customerData.value.created_at).getFullYear().toString()
-    : '—',
+    : '—'
 }))
 
-const stats = [
-  { label: 'Zamówienia', value: '5', icon: 'i-lucide-shopping-bag', trend: '2 w tym roku' },
-  { label: 'Zapisane plany', value: '12', icon: 'i-lucide-heart', trend: '3 nowe w tym miesiącu' },
-  { label: 'Wydane łącznie', value: '3 150 zł', icon: 'i-lucide-banknote', trend: 'od początku konta' },
-  { label: 'Opinie', value: '3', icon: 'i-lucide-star', trend: 'wystawione oceny' }
-]
+const formatPLN = (value: number) =>
+  value.toLocaleString('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 })
 
-const recentOrders: Order[] = [
-  { id: '#2041', plan: 'Dom parterowy A1', date: '24.03.2026', status: 'Opłacone', amount: '599 zł' },
-  { id: '#2039', plan: 'Dom piętrowy C2', date: '10.02.2026', status: 'Opłacone', amount: '499 zł' },
-  { id: '#2031', plan: 'Willa z poddaszem B3', date: '05.01.2026', status: 'Opłacone', amount: '799 zł' },
-  { id: '#2018', plan: 'Bungalow D1', date: '14.11.2025', status: 'Zwrot', amount: '349 zł' },
-  { id: '#2005', plan: 'Dom z garażem E2', date: '02.09.2025', status: 'Opłacone', amount: '649 zł' }
-]
+const totalSpent = computed(() =>
+  (ordersData.value ?? []).reduce((sum, o) => sum + (o.total ?? 0), 0)
+)
 
-const savedPlans = [
-  { title: 'Dom nowoczesny F1', price: '699 zł', area: 120, rooms: 4 },
-  { title: 'Dom skandynawski G2', price: '549 zł', area: 95, rooms: 3 },
-  { title: 'Dom z tarasem H3', price: '849 zł', area: 145, rooms: 5 },
-  { title: 'Dom energooszczędny I1', price: '620 zł', area: 110, rooms: 4 }
-]
+const stats = computed(() => [
+  {
+    label: 'Zamówienia',
+    value: String(ordersData.value?.length ?? '—'),
+    icon: 'i-lucide-shopping-bag',
+    trend: ''
+  },
+  {
+    label: 'Wydane łącznie',
+    value: ordersData.value ? formatPLN(totalSpent.value) : '—',
+    icon: 'i-lucide-banknote',
+    trend: ''
+  }
+])
 
-const orderColumns: TableColumn<Order>[] = [
+const statusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    completed: 'Opłacone',
+    pending: 'Oczekuje',
+    cancelled: 'Anulowane',
+    requires_action: 'Wymaga akcji'
+  }
+  return map[status] ?? status
+}
+
+const recentOrders = computed<OrderRow[]>(() =>
+  (ordersData.value ?? []).slice(0, 10).map((o: AppOrder) => ({
+    id: '#' + o.id.slice(-6).toUpperCase(),
+    plan: o.items[0]?.title ?? '—',
+    date: new Date(o.created_at).toLocaleDateString('pl-PL'),
+    status: statusLabel(o.status),
+    amount: formatPLN(o.total)
+  }))
+)
+
+const orderColumns: TableColumn<OrderRow>[] = [
   { accessorKey: 'id', header: 'Nr' },
   { accessorKey: 'plan', header: 'Plan' },
   { accessorKey: 'date', header: 'Data' },
@@ -60,7 +87,7 @@ const orderColumns: TableColumn<Order>[] = [
 const statusColor = (status: string) => {
   if (status === 'Opłacone') return 'success'
   if (status === 'Oczekuje') return 'warning'
-  if (status === 'Zwrot') return 'error'
+  if (status === 'Anulowane') return 'error'
   return 'neutral'
 }
 </script>
@@ -103,7 +130,7 @@ const statusColor = (status: string) => {
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <UCard
         v-for="stat in stats"
         :key="stat.label"
@@ -116,9 +143,6 @@ const statusColor = (status: string) => {
             <p class="text-2xl font-bold text-default">
               {{ stat.value }}
             </p>
-            <p class="text-xs text-muted">
-              {{ stat.trend }}
-            </p>
           </div>
           <div class="rounded-lg bg-primary/10 p-2">
             <UIcon
@@ -130,22 +154,23 @@ const statusColor = (status: string) => {
       </UCard>
     </div>
 
-    <!-- Main grid -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-      <!-- Orders -->
-      <div class="space-y-3 xl:col-span-2">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-default">
-            Moje zamówienia
-          </h2>
-          <UButton
-            variant="ghost"
-            size="xs"
-            trailing-icon="i-lucide-arrow-right"
-          >
-            Wszystkie
-          </UButton>
-        </div>
+    <!-- Orders -->
+    <div class="space-y-3">
+      <h2 class="text-lg font-semibold text-default">
+        Moje zamówienia
+      </h2>
+
+      <div
+        v-if="ordersPending"
+        class="flex justify-center py-8"
+      >
+        <UIcon
+          name="i-lucide-loader-2"
+          class="size-6 animate-spin text-muted"
+        />
+      </div>
+
+      <template v-else-if="recentOrders.length">
         <UCard :ui="{ body: 'p-0' }">
           <UTable
             :columns="orderColumns"
@@ -167,97 +192,13 @@ const statusColor = (status: string) => {
             </template>
           </UTable>
         </UCard>
-      </div>
+      </template>
 
-      <!-- Sidebar -->
-      <div class="space-y-6">
-        <!-- Saved plans -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-default">
-              Zapisane plany
-            </h2>
-            <UButton
-              variant="ghost"
-              size="xs"
-              trailing-icon="i-lucide-arrow-right"
-            >
-              Wszystkie
-            </UButton>
-          </div>
-          <UCard>
-            <ul class="divide-y divide-default">
-              <li
-                v-for="plan in savedPlans"
-                :key="plan.title"
-                class="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-              >
-                <div class="min-w-0">
-                  <p class="truncate text-sm font-medium text-default">
-                    {{ plan.title }}
-                  </p>
-                  <p class="text-xs text-muted">
-                    {{ plan.area }} m² · {{ plan.rooms }} pokoje
-                  </p>
-                </div>
-                <div class="ml-2 flex shrink-0 items-center gap-2">
-                  <span class="text-sm font-medium text-primary">
-                    {{ plan.price }}
-                  </span>
-                  <UButton
-                    variant="ghost"
-                    size="xs"
-                    icon="i-lucide-heart"
-                    color="error"
-                  />
-                </div>
-              </li>
-            </ul>
-          </UCard>
-        </div>
-
-        <!-- Quick actions -->
-        <div class="space-y-3">
-          <h2 class="text-lg font-semibold text-default">
-            Szybkie akcje
-          </h2>
-          <UCard>
-            <div class="space-y-2">
-              <UButton
-                block
-                variant="soft"
-                icon="i-lucide-layout-template"
-              >
-                Przeglądaj plany
-              </UButton>
-              <UButton
-                block
-                variant="soft"
-                icon="i-lucide-download"
-                color="neutral"
-              >
-                Pobierz dokumenty
-              </UButton>
-              <UButton
-                block
-                variant="soft"
-                icon="i-lucide-message-circle"
-                color="neutral"
-              >
-                Kontakt ze sprzedawcą
-              </UButton>
-              <UButton
-                block
-                variant="soft"
-                icon="i-lucide-star"
-                color="neutral"
-              >
-                Wystaw opinię
-              </UButton>
-            </div>
-          </UCard>
-        </div>
-      </div>
+      <UCard v-else>
+        <p class="text-sm text-muted text-center py-4">
+          Nie masz jeszcze żadnych zamówień.
+        </p>
+      </UCard>
     </div>
   </UContainer>
 </template>

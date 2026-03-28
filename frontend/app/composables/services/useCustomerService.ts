@@ -25,5 +25,10 @@ export function useCustomerService() {
     return mapToAppCustomer(response.customer)
   }
 
-  return { listCustomers, getCustomer }
+  async function getCustomerOrders(customerId: string) {
+    const response = await sdk.client.fetch<{ orders: import('~/types/order').AppOrder[] }>(`/store/customers/${customerId}/orders`)
+    return response.orders || []
+  }
+
+  return { listCustomers, getCustomer, getCustomerOrders }
 }

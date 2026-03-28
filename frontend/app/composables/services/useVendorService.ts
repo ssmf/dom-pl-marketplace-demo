@@ -3,6 +3,7 @@ import { mapToAppVendor } from '~/utils/mappers/vendorMapper'
 import { mapToAppHousePlan } from '~/utils/mappers/housePlanMapper'
 import type { AppVendor, VendorApiResponse } from '~/types/vendor'
 import type { AppHousePlan, HousePlanApiResponse } from '~/types/house-plan'
+import type { AppOrder } from '~/types/order'
 
 export function useVendorService() {
   const sdk = useMedusaClient()
@@ -47,6 +48,11 @@ export function useVendorService() {
     }
   }
 
+  async function getVendorOrders(vendorId: string) {
+    const response = await sdk.client.fetch<{ orders: AppOrder[] }>(`/store/vendors/${vendorId}/orders`)
+    return response.orders || []
+  }
+
   async function deleteVendorHousePlan(vendorId: string, planId: string): Promise<void> {
     await sdk.client.fetch(`/store/vendors/${vendorId}/house-plans/${planId}`, {
       method: 'DELETE',
@@ -72,5 +78,5 @@ export function useVendorService() {
     return mapToAppHousePlan(response.house_plan)
   }
 
-  return { listVendors, getVendor, getVendorHousePlans, createVendorHousePlan, deleteVendorHousePlan }
+  return { listVendors, getVendor, getVendorHousePlans, getVendorOrders, createVendorHousePlan, deleteVendorHousePlan }
 }
