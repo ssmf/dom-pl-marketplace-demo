@@ -83,7 +83,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         id: o.id,
         status: meta.status ?? o.status,
         created_at: meta.created_at ?? o.created_at,
-        total: toNum(meta.total) || itemsTotal,
+        total: itemsTotal,
         email: meta.email ?? o.email,
         items,
       }
