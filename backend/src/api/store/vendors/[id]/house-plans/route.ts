@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, Modules, ProductStatus } from "@medusajs/framework/utils"
+import { HOUSE_PLAN_FIELDS } from "../../../../../modules/house_plan/fields"
 import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { HOUSE_PLAN_MODULE } from "../../../../../modules/house_plan"
 import { VENDOR_MODULE } from "../../../../../modules/vendor"
@@ -13,15 +14,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     entity: "vendor",
     fields: [
       "id",
-      "house_plans.id",
-      "house_plans.title",
-      "house_plans.price",
-      "house_plans.description",
-      "house_plans.img",
-      "house_plans.house_area",
-      "house_plans.rooms",
-      "house_plans.bathrooms_and_wc",
-      "house_plans.plot_dimensions",
+      ...HOUSE_PLAN_FIELDS.map(f => `house_plans.${f}`),
     ],
     filters: { id },
   })
@@ -94,7 +87,7 @@ export async function POST(
   // Return the created house_plan
   const { data: housePlans } = await query.graph({
     entity: "house_plan",
-    fields: ["id", "title", "price", "description", "img", "house_area", "rooms", "bathrooms_and_wc", "plot_dimensions"],
+    fields: [...HOUSE_PLAN_FIELDS],
     filters: { id: housePlanId },
   })
 

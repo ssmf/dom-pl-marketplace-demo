@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { HOUSE_PLAN_FIELDS } from "../../../../../modules/house_plan/fields"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params
@@ -22,15 +23,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { data: housePlans } = await query.graph({
     entity: "house_plan",
     fields: [
-      "id",
-      "title",
-      "price",
-      "img",
-      "house_area",
-      "boiler_room_area",
-      "rooms",
-      "bathrooms_and_wc",
-      "plot_dimensions",
+      ...HOUSE_PLAN_FIELDS,
       "product.id",
     ],
     filters: { id: housePlanIds },

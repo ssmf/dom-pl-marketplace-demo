@@ -1,6 +1,6 @@
-import type { AppHousePlan, HousePlanApiResponse } from '~/types/house-plan'
+import type { AppHousePlan } from '~/types/house-plan'
 
-export function mapToAppHousePlan(raw: HousePlanApiResponse): AppHousePlan {
+export function mapToAppHousePlan(raw: any): AppHousePlan {
   return {
     id: raw.id || '',
     title: raw.title || '',
@@ -29,6 +29,6 @@ export function mapToAppHousePlan(raw: HousePlanApiResponse): AppHousePlan {
     terrace: raw.terrace ?? null,
     houseType: raw.house_type ?? null,
     vendor: raw.vendor ?? null,
-    variantId: raw.variant_id ?? null
+    variantId: raw.variant_id ?? null,
   }
 }
