@@ -25,4 +25,6 @@ export const HOUSE_PLAN_FIELDS = [
   "fireplace",
   "terrace",
   "house_type",
+  "created_at",
+  "updated_at",
 ] as const
