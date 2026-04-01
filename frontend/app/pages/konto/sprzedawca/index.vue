@@ -24,6 +24,21 @@ type PlanForm = {
   bathrooms_and_wc: string
   plot_dimensions: string
   min_plot_dimensions_after_adaptation: string
+  floors: string
+  building_width: string
+  building_length: string
+  building_footprint: string
+  total_area: string
+  roof_type: string
+  roof_angle: string
+  garage: string
+  architectural_style: string
+  energy_standard: string
+  basement: string
+  building_height: string
+  fireplace: string
+  terrace: string
+  house_type: string
 }
 
 const emptyForm = (): PlanForm => ({
@@ -37,7 +52,25 @@ const emptyForm = (): PlanForm => ({
   bathrooms_and_wc: '',
   plot_dimensions: '',
   min_plot_dimensions_after_adaptation: '',
+  floors: '',
+  building_width: '',
+  building_length: '',
+  building_footprint: '',
+  total_area: '',
+  roof_type: '',
+  roof_angle: '',
+  garage: '',
+  architectural_style: '',
+  energy_standard: '',
+  basement: '',
+  building_height: '',
+  fireplace: '',
+  terrace: '',
+  house_type: '',
 })
+
+const numOrNull = (val: string) =>
+  val && !isNaN(Number(val)) ? Number(val) : undefined
 
 const route = useRoute()
 const toast = useToast()
@@ -75,6 +108,23 @@ async function submitPlan() {
       ...(form.value.img.trim() && { img: form.value.img.trim() }),
       ...(form.value.boiler_room_area && !isNaN(Number(form.value.boiler_room_area)) && { boiler_room_area: Number(form.value.boiler_room_area) }),
       ...(form.value.min_plot_dimensions_after_adaptation.trim() && { min_plot_dimensions_after_adaptation: form.value.min_plot_dimensions_after_adaptation.trim() }),
+      ...(numOrNull(form.value.floors) !== undefined && { floors: numOrNull(form.value.floors) }),
+      ...(numOrNull(form.value.building_width) !== undefined && { building_width: numOrNull(form.value.building_width) }),
+      ...(numOrNull(form.value.building_length) !== undefined && { building_length: numOrNull(form.value.building_length) }),
+      ...(numOrNull(form.value.building_footprint) !== undefined && { building_footprint: numOrNull(form.value.building_footprint) }),
+      ...(numOrNull(form.value.total_area) !== undefined && { total_area: numOrNull(form.value.total_area) }),
+      ...(numOrNull(form.value.building_height) !== undefined && { building_height: numOrNull(form.value.building_height) }),
+      ...(numOrNull(form.value.roof_angle) !== undefined && { roof_angle: numOrNull(form.value.roof_angle) }),
+      ...(form.value.roof_type && { roof_type: form.value.roof_type }),
+      ...(form.value.garage && { garage: form.value.garage }),
+      ...(form.value.architectural_style && { architectural_style: form.value.architectural_style }),
+      ...(form.value.energy_standard && { energy_standard: form.value.energy_standard }),
+      ...(form.value.basement && { basement: form.value.basement }),
+      ...(form.value.house_type && { house_type: form.value.house_type }),
+      ...(form.value.fireplace === 'tak' && { fireplace: true }),
+      ...(form.value.fireplace === 'nie' && { fireplace: false }),
+      ...(form.value.terrace === 'tak' && { terrace: true }),
+      ...(form.value.terrace === 'nie' && { terrace: false }),
     })
     toast.add({ title: 'Plan dodany', description: 'Plan domu został opublikowany.', color: 'success' })
     slideoverOpen.value = false
@@ -365,20 +415,23 @@ const statusColor = (status: string) => {
                   :key="plan.id"
                   class="flex items-center justify-between py-3 first:pt-0 last:pb-0"
                 >
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-medium text-default">
+                  <NuxtLink
+                    :to="`/produkty/${plan.id}`"
+                    class="min-w-0 flex-1 group"
+                  >
+                    <p class="truncate text-sm font-medium text-default group-hover:text-primary transition-colors">
                       {{ plan.title }}
                     </p>
                     <p class="text-xs text-muted">
                       {{ plan.price }}
                     </p>
-                  </div>
+                  </NuxtLink>
                   <UButton
                     variant="ghost"
                     color="error"
                     icon="i-lucide-trash-2"
                     size="xs"
-                    class="cursor-pointer"
+                    class="cursor-pointer shrink-0 ml-2"
                     @click="deletePlan(plan.id)"
                   />
                 </li>
@@ -464,6 +517,146 @@ const statusColor = (status: string) => {
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">Min. wymiary po adaptacji</label>
             <UInput v-model="form.min_plot_dimensions_after_adaptation" placeholder="12x18" />
+          </div>
+
+          <!-- Bryła budynku -->
+          <p class="text-sm font-semibold text-default pt-2">Bryła budynku</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Kondygnacje</label>
+              <UInput v-model="form.floors" type="number" placeholder="2" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Wysokość (m)</label>
+              <UInput v-model="form.building_height" type="number" placeholder="8.5" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Szerokość (m)</label>
+              <UInput v-model="form.building_width" type="number" placeholder="11.5" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Długość (m)</label>
+              <UInput v-model="form.building_length" type="number" placeholder="9.5" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Pow. zabudowy (m²)</label>
+              <UInput v-model="form.building_footprint" type="number" placeholder="72" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Pow. całkowita (m²)</label>
+              <UInput v-model="form.total_area" type="number" placeholder="138" />
+            </div>
+          </div>
+
+          <!-- Dach -->
+          <p class="text-sm font-semibold text-default pt-2">Dach</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Rodzaj dachu</label>
+              <USelect
+                v-model="form.roof_type"
+                :items="[
+                  { label: 'Dwuspadowy', value: 'dwuspadowy' },
+                  { label: 'Czterospadowy', value: 'czterospadowy' },
+                  { label: 'Płaski', value: 'płaski' },
+                  { label: 'Mansardowy', value: 'mansardowy' },
+                  { label: 'Jednospadowy', value: 'jednospadowy' },
+                ]"
+                placeholder="Wybierz..."
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Kąt nachylenia (°)</label>
+              <UInput v-model="form.roof_angle" type="number" placeholder="35" />
+            </div>
+          </div>
+
+          <!-- Wyposażenie -->
+          <p class="text-sm font-semibold text-default pt-2">Wyposażenie</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Garaż</label>
+              <USelect
+                v-model="form.garage"
+                :items="[
+                  { label: 'Brak', value: 'brak' },
+                  { label: 'Jednostanowiskowy', value: 'jednostanowiskowy' },
+                  { label: 'Dwustanowiskowy', value: 'dwustanowiskowy' },
+                  { label: 'Trzystanowiskowy', value: 'trzystanowiskowy' },
+                ]"
+                placeholder="Wybierz..."
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Piwnica</label>
+              <USelect
+                v-model="form.basement"
+                :items="[
+                  { label: 'Brak', value: 'brak' },
+                  { label: 'Częściowa', value: 'częściowa' },
+                  { label: 'Pełna', value: 'pełna' },
+                ]"
+                placeholder="Wybierz..."
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Kominek</label>
+              <USelect
+                v-model="form.fireplace"
+                :items="[{ label: 'Tak', value: 'tak' }, { label: 'Nie', value: 'nie' }]"
+                placeholder="Wybierz..."
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Taras</label>
+              <USelect
+                v-model="form.terrace"
+                :items="[{ label: 'Tak', value: 'tak' }, { label: 'Nie', value: 'nie' }]"
+                placeholder="Wybierz..."
+              />
+            </div>
+          </div>
+
+          <!-- Styl i standard -->
+          <p class="text-sm font-semibold text-default pt-2">Styl i standard</p>
+          <div class="grid grid-cols-1 gap-3">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Typ domu</label>
+              <USelect
+                v-model="form.house_type"
+                :items="[
+                  { label: 'Jednorodzinny', value: 'jednorodzinny' },
+                  { label: 'Bliźniak', value: 'bliźniak' },
+                  { label: 'Rekreacyjny', value: 'rekreacyjny' },
+                ]"
+                placeholder="Wybierz..."
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Styl architektoniczny</label>
+              <USelect
+                v-model="form.architectural_style"
+                :items="[
+                  { label: 'Tradycyjny', value: 'tradycyjny' },
+                  { label: 'Nowoczesny', value: 'nowoczesny' },
+                  { label: 'Klasyczny', value: 'klasyczny' },
+                  { label: 'Skandynawski', value: 'skandynawski' },
+                ]"
+                placeholder="Wybierz..."
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-default">Standard energetyczny</label>
+              <USelect
+                v-model="form.energy_standard"
+                :items="[
+                  { label: 'Standard', value: 'standard' },
+                  { label: 'Energooszczędny', value: 'energooszczędny' },
+                  { label: 'Pasywny', value: 'pasywny' },
+                ]"
+                placeholder="Wybierz..."
+              />
+            </div>
           </div>
         </div>
       </template>
