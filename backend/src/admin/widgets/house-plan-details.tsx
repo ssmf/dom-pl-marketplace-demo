@@ -47,64 +47,40 @@ type HousePlan = {
   updated_at: string
 }
 
-type EditForm = {
-  title: string
-  price: string
-  description: string
-  img: string
-  house_area: string
-  boiler_room_area: string
-  rooms: string
-  bathrooms_and_wc: string
-  plot_dimensions: string
-  min_plot_dimensions_after_adaptation: string
-  floors: string
-  building_width: string
-  building_length: string
-  building_footprint: string
-  total_area: string
-  roof_type: string
-  roof_angle: string
-  garage: string
-  architectural_style: string
-  energy_standard: string
-  basement: string
-  building_height: string
-  fireplace: string
-  terrace: string
-  house_type: string
-}
+// Pomocniki konwersji dla planToForm
+const ns = (v: number | null | undefined) => v != null ? String(v) : ""
+const ss = (v: string | null | undefined) => v ?? ""
+const boolToForm = (v: boolean | null) => v === true ? "tak" : v === false ? "nie" : ""
 
-const boolToForm = (val: boolean | null) =>
-  val === true ? "tak" : val === false ? "nie" : ""
-
-const planToForm = (plan: HousePlan): EditForm => ({
-  title: plan.title,
-  price: String(plan.price),
-  description: plan.description ?? "",
-  img: plan.img ?? "",
-  house_area: String(plan.house_area),
-  boiler_room_area: plan.boiler_room_area != null ? String(plan.boiler_room_area) : "",
-  rooms: String(plan.rooms),
-  bathrooms_and_wc: String(plan.bathrooms_and_wc),
-  plot_dimensions: plan.plot_dimensions,
-  min_plot_dimensions_after_adaptation: plan.min_plot_dimensions_after_adaptation ?? "",
-  floors: plan.floors ? String(plan.floors) : "",
-  building_width: plan.building_width != null ? String(plan.building_width) : "",
-  building_length: plan.building_length != null ? String(plan.building_length) : "",
-  building_footprint: plan.building_footprint != null ? String(plan.building_footprint) : "",
-  total_area: plan.total_area != null ? String(plan.total_area) : "",
-  roof_type: plan.roof_type ?? "",
-  roof_angle: plan.roof_angle != null ? String(plan.roof_angle) : "",
-  garage: plan.garage ?? "",
-  architectural_style: plan.architectural_style ?? "",
-  energy_standard: plan.energy_standard ?? "",
-  basement: plan.basement ?? "",
-  building_height: plan.building_height != null ? String(plan.building_height) : "",
-  fireplace: boolToForm(plan.fireplace),
-  terrace: boolToForm(plan.terrace),
-  house_type: plan.house_type ?? "",
+const planToForm = (plan: HousePlan) => ({
+  title:                               plan.title,
+  price:                               String(plan.price),
+  description:                         ss(plan.description),
+  img:                                 ss(plan.img),
+  house_area:                          String(plan.house_area),
+  boiler_room_area:                    ns(plan.boiler_room_area),
+  rooms:                               String(plan.rooms),
+  bathrooms_and_wc:                    String(plan.bathrooms_and_wc),
+  plot_dimensions:                     plan.plot_dimensions,
+  min_plot_dimensions_after_adaptation: ss(plan.min_plot_dimensions_after_adaptation),
+  floors:                              ns(plan.floors),
+  building_width:                      ns(plan.building_width),
+  building_length:                     ns(plan.building_length),
+  building_footprint:                  ns(plan.building_footprint),
+  total_area:                          ns(plan.total_area),
+  roof_type:                           ss(plan.roof_type),
+  roof_angle:                          ns(plan.roof_angle),
+  garage:                              ss(plan.garage),
+  architectural_style:                 ss(plan.architectural_style),
+  energy_standard:                     ss(plan.energy_standard),
+  basement:                            ss(plan.basement),
+  building_height:                     ns(plan.building_height),
+  fireplace:                           boolToForm(plan.fireplace),
+  terrace:                             boolToForm(plan.terrace),
+  house_type:                          ss(plan.house_type),
 })
+
+type EditForm = ReturnType<typeof planToForm>
 
 const numOrNull = (val: string) =>
   val && !isNaN(Number(val)) ? Number(val) : null

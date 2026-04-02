@@ -13,35 +13,7 @@ type OrderRow = {
   amount: string
 }
 
-type PlanForm = {
-  title: string
-  price: string
-  description: string
-  img: string
-  house_area: string
-  boiler_room_area: string
-  rooms: string
-  bathrooms_and_wc: string
-  plot_dimensions: string
-  min_plot_dimensions_after_adaptation: string
-  floors: string
-  building_width: string
-  building_length: string
-  building_footprint: string
-  total_area: string
-  roof_type: string
-  roof_angle: string
-  garage: string
-  architectural_style: string
-  energy_standard: string
-  basement: string
-  building_height: string
-  fireplace: string
-  terrace: string
-  house_type: string
-}
-
-const emptyForm = (): PlanForm => ({
+const emptyForm = () => ({
   title: '',
   price: '',
   description: '',
@@ -66,8 +38,10 @@ const emptyForm = (): PlanForm => ({
   building_height: '',
   fireplace: '',
   terrace: '',
-  house_type: '',
+  house_type: ''
 })
+
+type PlanForm = ReturnType<typeof emptyForm>
 
 const numOrNull = (val: string) =>
   val && !isNaN(Number(val)) ? Number(val) : undefined
