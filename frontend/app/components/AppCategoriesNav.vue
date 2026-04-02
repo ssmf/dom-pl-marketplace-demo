@@ -81,7 +81,7 @@ const categories = [
     ]
   },
   {
-    label: 'Standard',
+    label: 'Standard Energetyczny',
     items: [
       [
         { label: 'Energooszczędne', as: NuxtLink, to: '/produkty?energyStandard=energooszcz%C4%99dny' },
