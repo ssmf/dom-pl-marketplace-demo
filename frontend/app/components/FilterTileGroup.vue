@@ -4,9 +4,11 @@
       {{ label }}
     </h2>
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-      <button
+      <component
+        :is="tile.to ? NuxtLink : 'button'"
         v-for="tile in tiles"
         :key="tile.label"
+        :to="tile.to"
         class="group flex flex-col rounded-xl border border-muted bg-default hover:border-primary hover:shadow-md transition-all cursor-pointer overflow-hidden text-left"
       >
         <div class="w-full aspect-3/2 bg-elevated flex items-center justify-center">
@@ -20,15 +22,19 @@
             {{ tile.label }}
           </span>
         </div>
-      </button>
+      </component>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { resolveComponent } from 'vue'
+
 defineProps<{
   label: string
   icon: string
-  tiles: { label: string; icon?: string }[]
+  tiles: { label: string, icon?: string, to?: string }[]
 }>()
+
+const NuxtLink = resolveComponent('NuxtLink')
 </script>

@@ -10,6 +10,11 @@ export interface HousePlanListParams {
   minArea?: number
   maxArea?: number
   rooms?: number
+  floors?: number
+  garage?: string
+  houseType?: string
+  architecturalStyle?: string
+  energyStandard?: string
 }
 
 export function useHousePlanService() {
@@ -30,6 +35,11 @@ export function useHousePlanService() {
         if (params.maxArea !== undefined) queryParams.append('house_area[$lte]', String(params.maxArea))
 
         if (params.rooms !== undefined) queryParams.append('rooms', String(params.rooms))
+        if (params.floors !== undefined) queryParams.append('floors', String(params.floors))
+        if (params.garage !== undefined) queryParams.append('garage', params.garage)
+        if (params.houseType !== undefined) queryParams.append('house_type', params.houseType)
+        if (params.architecturalStyle !== undefined) queryParams.append('architectural_style', params.architecturalStyle)
+        if (params.energyStandard !== undefined) queryParams.append('energy_standard', params.energyStandard)
       }
 
       const queryString = queryParams.toString()

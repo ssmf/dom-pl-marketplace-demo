@@ -30,7 +30,39 @@ export function useHousePlanFilters() {
       minArea: route.query.minArea ? Number(route.query.minArea) : undefined,
       maxArea: route.query.maxArea ? Number(route.query.maxArea) : undefined,
       rooms: route.query.rooms ? Number(route.query.rooms) : undefined,
+      floors: route.query.floors ? Number(route.query.floors) : undefined,
+      garage: route.query.garage ? String(route.query.garage) : undefined,
+      houseType: route.query.houseType ? String(route.query.houseType) : undefined,
+      architecturalStyle: route.query.architecturalStyle ? String(route.query.architecturalStyle) : undefined,
+      energyStandard: route.query.energyStandard ? String(route.query.energyStandard) : undefined,
     }
+  })
+
+  const categoryLabel = computed<string | null>(() => {
+    const q = route.query
+    const labels: string[] = []
+
+    if (q.floors === '1') labels.push('parterowe')
+    else if (q.floors === '2') labels.push('piętrowe')
+    else if (q.floors) labels.push(`${q.floors}-kondygnacyjne`)
+
+    if (q.maxArea && !q.minArea) labels.push(`do ${q.maxArea} m²`)
+    else if (q.minArea && !q.maxArea) labels.push(`powyżej ${q.minArea} m²`)
+    else if (q.minArea && q.maxArea) labels.push(`${q.minArea}–${q.maxArea} m²`)
+
+    if (q.rooms) labels.push(`${q.rooms} ${Number(q.rooms) === 1 ? 'pokój' : Number(q.rooms) < 5 ? 'pokoje' : 'pokoi'}`)
+
+    if (q.architecturalStyle) labels.push(String(q.architecturalStyle))
+    if (q.houseType) labels.push(String(q.houseType))
+    if (q.energyStandard) labels.push(String(q.energyStandard))
+    if (q.garage && q.garage !== 'brak') labels.push('z garażem')
+
+    if (q.minPrice && !q.maxPrice) labels.push(`od ${Number(q.minPrice).toLocaleString('pl-PL')} PLN`)
+    else if (q.maxPrice && !q.minPrice) labels.push(`do ${Number(q.maxPrice).toLocaleString('pl-PL')} PLN`)
+    else if (q.minPrice && q.maxPrice) labels.push(`${Number(q.minPrice).toLocaleString('pl-PL')}–${Number(q.maxPrice).toLocaleString('pl-PL')} PLN`)
+
+    if (labels.length === 0) return null
+    return 'Projekty domów ' + labels.join(', ')
   })
 
   const applyFilters = (newFilters: HousePlanListParams) => {
@@ -63,6 +95,7 @@ export function useHousePlanFilters() {
     page,
     limit,
     filters,
+    categoryLabel,
     serviceParams,
     applyFilters,
     clearFilters
