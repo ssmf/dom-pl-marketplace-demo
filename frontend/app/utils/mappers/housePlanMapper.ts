@@ -1,6 +1,6 @@
-import type { AppHousePlan, HousePlanApiResponse } from '~/types/house-plan'
+import type { AppHousePlan } from '~/types/house-plan'
 
-export function mapToAppHousePlan(raw: HousePlanApiResponse): AppHousePlan {
+export function mapToAppHousePlan(raw: any): AppHousePlan {
   return {
     id: raw.id || '',
     title: raw.title || '',
@@ -13,7 +13,22 @@ export function mapToAppHousePlan(raw: HousePlanApiResponse): AppHousePlan {
     bathroomsAndWc: Number(raw.bathrooms_and_wc) || 0,
     plotDimensions: raw.plot_dimensions || '',
     minPlotDimensionsAfterAdaptation: raw.min_plot_dimensions_after_adaptation ?? null,
+    floors: Number(raw.floors) || 0,
+    buildingWidth: raw.building_width ? Number(raw.building_width) : null,
+    buildingLength: raw.building_length ? Number(raw.building_length) : null,
+    buildingFootprint: raw.building_footprint ? Number(raw.building_footprint) : null,
+    totalArea: raw.total_area ? Number(raw.total_area) : null,
+    roofType: raw.roof_type ?? null,
+    roofAngle: raw.roof_angle ? Number(raw.roof_angle) : null,
+    garage: raw.garage ?? null,
+    architecturalStyle: raw.architectural_style ?? null,
+    energyStandard: raw.energy_standard ?? null,
+    basement: raw.basement ?? null,
+    buildingHeight: raw.building_height ? Number(raw.building_height) : null,
+    fireplace: raw.fireplace ?? null,
+    terrace: raw.terrace ?? null,
+    houseType: raw.house_type ?? null,
     vendor: raw.vendor ?? null,
-    variantId: raw.variant_id ?? null
+    variantId: raw.variant_id ?? null,
   }
 }

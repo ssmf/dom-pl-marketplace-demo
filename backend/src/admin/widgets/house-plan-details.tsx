@@ -6,6 +6,7 @@ import {
   Heading,
   Input,
   Label,
+  Select,
   Text,
   Textarea,
   toast,
@@ -27,35 +28,65 @@ type HousePlan = {
   bathrooms_and_wc: number
   plot_dimensions: string
   min_plot_dimensions_after_adaptation: string | null
+  floors: number
+  building_width: number | null
+  building_length: number | null
+  building_footprint: number | null
+  total_area: number | null
+  roof_type: string | null
+  roof_angle: number | null
+  garage: string | null
+  architectural_style: string | null
+  energy_standard: string | null
+  basement: string | null
+  building_height: number | null
+  fireplace: boolean | null
+  terrace: boolean | null
+  house_type: string | null
   created_at: string
   updated_at: string
 }
 
-type EditForm = {
-  title: string
-  price: string
-  description: string
-  img: string
-  house_area: string
-  boiler_room_area: string
-  rooms: string
-  bathrooms_and_wc: string
-  plot_dimensions: string
-  min_plot_dimensions_after_adaptation: string
-}
+// Pomocniki konwersji dla planToForm
+const ns = (v: number | null | undefined) => v != null ? String(v) : ""
+const ss = (v: string | null | undefined) => v ?? ""
+const boolToForm = (v: boolean | null) => v === true ? "tak" : v === false ? "nie" : ""
 
-const planToForm = (plan: HousePlan): EditForm => ({
-  title: plan.title,
-  price: String(plan.price),
-  description: plan.description ?? "",
-  img: plan.img ?? "",
-  house_area: String(plan.house_area),
-  boiler_room_area: plan.boiler_room_area != null ? String(plan.boiler_room_area) : "",
-  rooms: String(plan.rooms),
-  bathrooms_and_wc: String(plan.bathrooms_and_wc),
-  plot_dimensions: plan.plot_dimensions,
-  min_plot_dimensions_after_adaptation: plan.min_plot_dimensions_after_adaptation ?? "",
+const planToForm = (plan: HousePlan) => ({
+  title:                               plan.title,
+  price:                               String(plan.price),
+  description:                         ss(plan.description),
+  img:                                 ss(plan.img),
+  house_area:                          String(plan.house_area),
+  boiler_room_area:                    ns(plan.boiler_room_area),
+  rooms:                               String(plan.rooms),
+  bathrooms_and_wc:                    String(plan.bathrooms_and_wc),
+  plot_dimensions:                     plan.plot_dimensions,
+  min_plot_dimensions_after_adaptation: ss(plan.min_plot_dimensions_after_adaptation),
+  floors:                              ns(plan.floors),
+  building_width:                      ns(plan.building_width),
+  building_length:                     ns(plan.building_length),
+  building_footprint:                  ns(plan.building_footprint),
+  total_area:                          ns(plan.total_area),
+  roof_type:                           ss(plan.roof_type),
+  roof_angle:                          ns(plan.roof_angle),
+  garage:                              ss(plan.garage),
+  architectural_style:                 ss(plan.architectural_style),
+  energy_standard:                     ss(plan.energy_standard),
+  basement:                            ss(plan.basement),
+  building_height:                     ns(plan.building_height),
+  fireplace:                           boolToForm(plan.fireplace),
+  terrace:                             boolToForm(plan.terrace),
+  house_type:                          ss(plan.house_type),
 })
+
+type EditForm = ReturnType<typeof planToForm>
+
+const numOrNull = (val: string) =>
+  val && !isNaN(Number(val)) ? Number(val) : null
+
+const formToBool = (val: string) =>
+  val === "tak" ? true : val === "nie" ? false : null
 
 const formatPLN = (value: number) =>
   value.toLocaleString("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 })
@@ -131,15 +162,32 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
       plot_dimensions: form.plot_dimensions.trim(),
       description: form.description.trim() || null,
       img: form.img.trim() || null,
-      boiler_room_area:
-        form.boiler_room_area && !isNaN(Number(form.boiler_room_area))
-          ? Number(form.boiler_room_area)
-          : null,
-      min_plot_dimensions_after_adaptation:
-        form.min_plot_dimensions_after_adaptation.trim() || null,
+      boiler_room_area: numOrNull(form.boiler_room_area),
+      min_plot_dimensions_after_adaptation: form.min_plot_dimensions_after_adaptation.trim() || null,
+      floors: numOrNull(form.floors),
+      building_width: numOrNull(form.building_width),
+      building_length: numOrNull(form.building_length),
+      building_footprint: numOrNull(form.building_footprint),
+      total_area: numOrNull(form.total_area),
+      roof_type: form.roof_type || null,
+      roof_angle: numOrNull(form.roof_angle),
+      garage: form.garage || null,
+      architectural_style: form.architectural_style || null,
+      energy_standard: form.energy_standard || null,
+      basement: form.basement || null,
+      building_height: numOrNull(form.building_height),
+      fireplace: formToBool(form.fireplace),
+      terrace: formToBool(form.terrace),
+      house_type: form.house_type || null,
     })
   }
 
+  const set = (key: keyof EditForm, val: string) => {
+    setForm((f) => f ? { ...f, [key]: val } : f)
+    setErrors((e) => ({ ...e, [key]: undefined }))
+  }
+
+  // Pole tekstowe / numeryczne
   const field = (key: keyof EditForm, label: string, opts?: { type?: string; required?: boolean }) => {
     if (!form) return null
     return (
@@ -150,10 +198,7 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
         <Input
           type={opts?.type ?? "text"}
           value={form[key]}
-          onChange={(e) => {
-            setForm({ ...form, [key]: e.target.value })
-            setErrors({ ...errors, [key]: undefined })
-          }}
+          onChange={(e) => set(key, e.target.value)}
           placeholder={label}
         />
         {errors[key] && (
@@ -161,6 +206,32 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
             {errors[key]}
           </Text>
         )}
+      </div>
+    )
+  }
+
+  // Pole Select z predefiniowanymi opcjami
+  const selectField = (
+    key: keyof EditForm,
+    label: string,
+    options: { label: string; value: string }[]
+  ) => {
+    if (!form) return null
+    return (
+      <div className="flex flex-col gap-y-1">
+        <Label size="small" weight="plus">{label}</Label>
+        <Select value={form[key]} onValueChange={(val) => set(key, val)}>
+          <Select.Trigger>
+            <Select.Value placeholder="Wybierz..." />
+          </Select.Trigger>
+          <Select.Content>
+            {options.map((opt) => (
+              <Select.Item key={opt.value} value={opt.value}>
+                {opt.label}
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select>
       </div>
     )
   }
@@ -217,27 +288,62 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
 
         <div className="pt-0 space-y-0">
           <DetailRow label="Cena" value={formatPLN(housePlan.price)} />
-          <DetailRow label="Powierzchnia domu" value={`${housePlan.house_area} m²`} />
+          <DetailRow label="Powierzchnia użytkowa" value={`${housePlan.house_area} m²`} />
           {housePlan.boiler_room_area != null && (
             <DetailRow label="Powierzchnia kotłowni" value={`${housePlan.boiler_room_area} m²`} />
           )}
+          {housePlan.total_area != null && (
+            <DetailRow label="Powierzchnia całkowita" value={`${housePlan.total_area} m²`} />
+          )}
+          {housePlan.building_footprint != null && (
+            <DetailRow label="Powierzchnia zabudowy" value={`${housePlan.building_footprint} m²`} />
+          )}
           <DetailRow label="Liczba pokoi" value={housePlan.rooms} />
           <DetailRow label="Łazienki i WC" value={housePlan.bathrooms_and_wc} />
+          {housePlan.floors != null && (
+            <DetailRow label="Kondygnacje" value={housePlan.floors} />
+          )}
           <DetailRow label="Wymiary działki" value={`${housePlan.plot_dimensions} m`} />
           {housePlan.min_plot_dimensions_after_adaptation && (
+            <DetailRow label="Min. wymiary po adaptacji" value={housePlan.min_plot_dimensions_after_adaptation} />
+          )}
+          {(housePlan.building_width != null && housePlan.building_length != null) && (
+            <DetailRow label="Wymiary budynku" value={`${housePlan.building_width} × ${housePlan.building_length} m`} />
+          )}
+          {housePlan.building_height != null && (
+            <DetailRow label="Wysokość budynku" value={`${housePlan.building_height} m`} />
+          )}
+          {housePlan.roof_type && (
             <DetailRow
-              label="Min. wymiary po adaptacji"
-              value={housePlan.min_plot_dimensions_after_adaptation}
+              label="Dach"
+              value={housePlan.roof_angle ? `${housePlan.roof_type}, ${housePlan.roof_angle}°` : housePlan.roof_type}
             />
+          )}
+          {housePlan.house_type && (
+            <DetailRow label="Typ domu" value={housePlan.house_type} />
+          )}
+          {housePlan.garage && (
+            <DetailRow label="Garaż" value={housePlan.garage} />
+          )}
+          {housePlan.basement && (
+            <DetailRow label="Piwnica" value={housePlan.basement} />
+          )}
+          {housePlan.architectural_style && (
+            <DetailRow label="Styl architektoniczny" value={housePlan.architectural_style} />
+          )}
+          {housePlan.energy_standard && (
+            <DetailRow label="Standard energetyczny" value={housePlan.energy_standard} />
+          )}
+          {housePlan.fireplace != null && (
+            <DetailRow label="Kominek" value={housePlan.fireplace ? "Tak" : "Nie"} />
+          )}
+          {housePlan.terrace != null && (
+            <DetailRow label="Taras" value={housePlan.terrace ? "Tak" : "Nie"} />
           )}
           {housePlan.description && (
             <div className="py-3">
-              <Text size="small" leading="compact" className="text-ui-fg-subtle mb-1">
-                Opis
-              </Text>
-              <Text size="small" leading="compact">
-                {housePlan.description}
-              </Text>
+              <Text size="small" leading="compact" className="text-ui-fg-subtle mb-1">Opis</Text>
+              <Text size="small" leading="compact">{housePlan.description}</Text>
             </div>
           )}
         </div>
@@ -249,6 +355,8 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
             <Drawer.Title>Edytuj plan domu</Drawer.Title>
           </Drawer.Header>
           <Drawer.Body className="flex flex-col gap-y-6 overflow-y-auto p-6">
+
+            {/* Podstawowe informacje */}
             <div className="flex flex-col gap-y-4">
               <Heading level="h3">Podstawowe informacje</Heading>
               {field("title", "Tytuł", { required: true })}
@@ -258,7 +366,7 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
                 {form && (
                   <Textarea
                     value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    onChange={(e) => set("description", e.target.value)}
                     placeholder="Opis planu domu..."
                     rows={4}
                   />
@@ -266,15 +374,82 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
               </div>
               {field("img", "URL zdjęcia")}
             </div>
+
+            {/* Parametry techniczne */}
             <div className="flex flex-col gap-y-4">
               <Heading level="h3">Parametry techniczne</Heading>
-              {field("house_area", "Powierzchnia domu (m²)", { type: "number", required: true })}
+              {field("house_area", "Powierzchnia użytkowa (m²)", { type: "number", required: true })}
               {field("boiler_room_area", "Powierzchnia kotłowni (m²)", { type: "number" })}
+              {field("total_area", "Powierzchnia całkowita (m²)", { type: "number" })}
+              {field("building_footprint", "Powierzchnia zabudowy (m²)", { type: "number" })}
               {field("rooms", "Liczba pokoi", { type: "number", required: true })}
               {field("bathrooms_and_wc", "Łazienki i WC", { type: "number", required: true })}
+              {field("floors", "Liczba kondygnacji", { type: "number" })}
               {field("plot_dimensions", "Wymiary działki (np. 15x20)", { required: true })}
               {field("min_plot_dimensions_after_adaptation", "Min. wymiary działki po adaptacji")}
             </div>
+
+            {/* Bryła budynku */}
+            <div className="flex flex-col gap-y-4">
+              <Heading level="h3">Bryła budynku</Heading>
+              {field("building_width", "Szerokość budynku (m)", { type: "number" })}
+              {field("building_length", "Długość budynku (m)", { type: "number" })}
+              {field("building_height", "Wysokość budynku (m)", { type: "number" })}
+              {selectField("roof_type", "Rodzaj dachu", [
+                { label: "Dwuspadowy", value: "dwuspadowy" },
+                { label: "Czterospadowy", value: "czterospadowy" },
+                { label: "Płaski", value: "płaski" },
+                { label: "Mansardowy", value: "mansardowy" },
+                { label: "Jednospadowy", value: "jednospadowy" },
+              ])}
+              {field("roof_angle", "Kąt nachylenia dachu (°)", { type: "number" })}
+            </div>
+
+            {/* Wyposażenie */}
+            <div className="flex flex-col gap-y-4">
+              <Heading level="h3">Wyposażenie</Heading>
+              {selectField("garage", "Garaż", [
+                { label: "Brak", value: "brak" },
+                { label: "Jednostanowiskowy", value: "jednostanowiskowy" },
+                { label: "Dwustanowiskowy", value: "dwustanowiskowy" },
+                { label: "Trzystanowiskowy", value: "trzystanowiskowy" },
+              ])}
+              {selectField("basement", "Piwnica", [
+                { label: "Brak", value: "brak" },
+                { label: "Częściowa", value: "częściowa" },
+                { label: "Pełna", value: "pełna" },
+              ])}
+              {selectField("fireplace", "Kominek", [
+                { label: "Tak", value: "tak" },
+                { label: "Nie", value: "nie" },
+              ])}
+              {selectField("terrace", "Taras", [
+                { label: "Tak", value: "tak" },
+                { label: "Nie", value: "nie" },
+              ])}
+            </div>
+
+            {/* Styl i standard */}
+            <div className="flex flex-col gap-y-4">
+              <Heading level="h3">Styl i standard</Heading>
+              {selectField("house_type", "Typ domu", [
+                { label: "Jednorodzinny", value: "jednorodzinny" },
+                { label: "Bliźniak", value: "bliźniak" },
+                { label: "Rekreacyjny", value: "rekreacyjny" },
+              ])}
+              {selectField("architectural_style", "Styl architektoniczny", [
+                { label: "Tradycyjny", value: "tradycyjny" },
+                { label: "Nowoczesny", value: "nowoczesny" },
+                { label: "Klasyczny", value: "klasyczny" },
+                { label: "Skandynawski", value: "skandynawski" },
+              ])}
+              {selectField("energy_standard", "Standard energetyczny", [
+                { label: "Standard", value: "standard" },
+                { label: "Energooszczędny", value: "energooszczędny" },
+                { label: "Pasywny", value: "pasywny" },
+              ])}
+            </div>
+
           </Drawer.Body>
           <Drawer.Footer>
             <div className="flex items-center justify-end gap-x-2">

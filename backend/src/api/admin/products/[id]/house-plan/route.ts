@@ -2,22 +2,7 @@ import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { HOUSE_PLAN_MODULE } from "../../../../../modules/house_plan"
 import HousePlanModuleService from "../../../../../modules/house_plan/service"
-
-const HOUSE_PLAN_FIELDS = [
-  "id",
-  "title",
-  "price",
-  "description",
-  "img",
-  "house_area",
-  "boiler_room_area",
-  "rooms",
-  "bathrooms_and_wc",
-  "plot_dimensions",
-  "min_plot_dimensions_after_adaptation",
-  "created_at",
-  "updated_at",
-]
+import { HOUSE_PLAN_FIELDS } from "../../../../../modules/house_plan/fields"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params

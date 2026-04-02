@@ -30,7 +30,7 @@ const handleAddToCart = async () => {
     console.error('No variant ID found for this house plan.')
     return
   }
-  
+
   isAddingToCart.value = true
   try {
     await cartService.addToCart(plan.value.variantId)
@@ -49,6 +49,19 @@ const formatPrice = (price: number) => {
     maximumFractionDigits: 0
   }).format(price)
 }
+
+const roofLabel = computed(() => {
+  const parts = []
+  if (plan.value?.roofType) parts.push(plan.value.roofType)
+  if (plan.value?.roofAngle) parts.push(`${plan.value.roofAngle}°`)
+  return parts.join(', ') || null
+})
+
+const dimensionsLabel = computed(() => {
+  const { buildingWidth, buildingLength } = plan.value ?? {}
+  if (buildingWidth && buildingLength) return `${buildingWidth} × ${buildingLength} m`
+  return null
+})
 </script>
 
 <template>
@@ -69,7 +82,7 @@ const formatPrice = (price: number) => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Left Column: Image and Description -->
       <div class="space-y-8">
-        <div class="aspect-video bg-[var(--ui-bg-elevated)] flex items-center justify-center rounded-xl overflow-hidden border border-[var(--ui-border)]">
+        <div class="aspect-video bg-[var(--ui-bg-elevated)] flex items-center justify-center rounded-xl overflow-hidden border border-default">
           <NuxtImg
             v-if="plan?.img"
             :src="plan.img"
@@ -137,13 +150,14 @@ const formatPrice = (price: number) => {
           </template>
         </UCard>
 
+        <!-- Podstawowe parametry -->
         <UCard>
           <template #header>
             <h3 class="text-lg font-semibold">Szczegóły projektu</h3>
           </template>
 
           <div class="space-y-4">
-            <div class="flex items-center justify-between py-2 border-b border-[var(--ui-border)] last:border-0">
+            <div class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-maximize" class="size-5" />
                 <span>Powierzchnia użytkowa</span>
@@ -151,7 +165,7 @@ const formatPrice = (price: number) => {
               <span class="font-medium text-default">{{ plan?.houseArea }} m²</span>
             </div>
 
-            <div v-if="plan?.boilerRoomArea" class="flex items-center justify-between py-2 border-b border-[var(--ui-border)] last:border-0">
+            <div v-if="plan?.boilerRoomArea" class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-thermometer" class="size-5" />
                 <span>Powierzchnia kotłowni</span>
@@ -159,7 +173,7 @@ const formatPrice = (price: number) => {
               <span class="font-medium text-default">{{ plan?.boilerRoomArea }} m²</span>
             </div>
 
-            <div class="flex items-center justify-between py-2 border-b border-[var(--ui-border)] last:border-0">
+            <div class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-door-open" class="size-5" />
                 <span>Liczba pokoi</span>
@@ -167,7 +181,15 @@ const formatPrice = (price: number) => {
               <span class="font-medium text-default">{{ plan?.rooms }}</span>
             </div>
 
-            <div class="flex items-center justify-between py-2 border-b border-[var(--ui-border)] last:border-0">
+            <div v-if="plan?.floors" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-layers" class="size-5" />
+                <span>Liczba kondygnacji</span>
+              </div>
+              <span class="font-medium text-default">{{ plan?.floors }}</span>
+            </div>
+
+            <div class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-bath" class="size-5" />
                 <span>Łazienki i WC</span>
@@ -175,15 +197,15 @@ const formatPrice = (price: number) => {
               <span class="font-medium text-default">{{ plan?.bathroomsAndWc }}</span>
             </div>
 
-            <div class="flex items-center justify-between py-2 border-b border-[var(--ui-border)] last:border-0">
+            <div class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-ruler" class="size-5" />
                 <span>Min. wymiary działki</span>
               </div>
               <span class="font-medium text-default">{{ plan?.plotDimensions }}</span>
             </div>
-            
-            <div v-if="plan?.minPlotDimensionsAfterAdaptation" class="flex items-center justify-between py-2 border-b border-[var(--ui-border)] last:border-0">
+
+            <div v-if="plan?.minPlotDimensionsAfterAdaptation" class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
                 <UIcon name="i-lucide-ruler" class="size-5" />
                 <span>Wymiary po adaptacji</span>
@@ -204,6 +226,125 @@ const formatPrice = (price: number) => {
               Kup projekt
             </UButton>
           </template>
+        </UCard>
+
+        <!-- Charakterystyka budynku -->
+        <UCard>
+          <template #header>
+            <h3 class="text-lg font-semibold">Charakterystyka budynku</h3>
+          </template>
+
+          <div class="space-y-4">
+            <div v-if="plan?.houseType" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-home" class="size-5" />
+                <span>Typ domu</span>
+              </div>
+              <span class="font-medium text-default capitalize">{{ plan.houseType }}</span>
+            </div>
+
+            <div v-if="plan?.architecturalStyle" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-pen-tool" class="size-5" />
+                <span>Styl architektoniczny</span>
+              </div>
+              <span class="font-medium text-default capitalize">{{ plan.architecturalStyle }}</span>
+            </div>
+
+            <div v-if="plan?.energyStandard" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-zap" class="size-5" />
+                <span>Standard energetyczny</span>
+              </div>
+              <span class="font-medium text-default capitalize">{{ plan.energyStandard }}</span>
+            </div>
+
+            <div v-if="plan?.garage" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-car" class="size-5" />
+                <span>Garaż</span>
+              </div>
+              <span class="font-medium text-default capitalize">{{ plan.garage }}</span>
+            </div>
+
+            <div v-if="plan?.basement" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-arrow-down-to-line" class="size-5" />
+                <span>Piwnica</span>
+              </div>
+              <span class="font-medium text-default capitalize">{{ plan.basement }}</span>
+            </div>
+
+            <div v-if="plan?.fireplace !== null" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-flame" class="size-5" />
+                <span>Kominek</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <UIcon
+                  :name="plan.fireplace ? 'i-lucide-check' : 'i-lucide-x'"
+                  :class="plan.fireplace ? 'text-green-500' : 'text-muted'"
+                  class="size-5"
+                />
+                <span class="font-medium text-default">{{ plan.fireplace ? 'Tak' : 'Nie' }}</span>
+              </div>
+            </div>
+
+            <div v-if="plan?.terrace !== null" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-sun" class="size-5" />
+                <span>Taras</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <UIcon
+                  :name="plan.terrace ? 'i-lucide-check' : 'i-lucide-x'"
+                  :class="plan.terrace ? 'text-green-500' : 'text-muted'"
+                  class="size-5"
+                />
+                <span class="font-medium text-default">{{ plan.terrace ? 'Tak' : 'Nie' }}</span>
+              </div>
+            </div>
+
+            <div v-if="roofLabel" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-triangle" class="size-5" />
+                <span>Dach</span>
+              </div>
+              <span class="font-medium text-default capitalize">{{ roofLabel }}</span>
+            </div>
+
+            <div v-if="dimensionsLabel" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-move-horizontal" class="size-5" />
+                <span>Wymiary budynku</span>
+              </div>
+              <span class="font-medium text-default">{{ dimensionsLabel }}</span>
+            </div>
+
+            <div v-if="plan?.buildingHeight" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-move-vertical" class="size-5" />
+                <span>Wysokość budynku</span>
+              </div>
+              <span class="font-medium text-default">{{ plan.buildingHeight }} m</span>
+            </div>
+
+            <div v-if="plan?.buildingFootprint" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-square" class="size-5" />
+                <span>Powierzchnia zabudowy</span>
+              </div>
+              <span class="font-medium text-default">{{ plan.buildingFootprint }} m²</span>
+            </div>
+
+            <div v-if="plan?.totalArea" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+              <div class="flex items-center gap-2 text-muted">
+                <UIcon name="i-lucide-layout" class="size-5" />
+                <span>Powierzchnia całkowita</span>
+              </div>
+              <span class="font-medium text-default">{{ plan.totalArea }} m²</span>
+            </div>
+          </div>
         </UCard>
       </div>
     </div>

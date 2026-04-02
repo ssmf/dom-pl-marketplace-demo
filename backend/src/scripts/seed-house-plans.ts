@@ -18,6 +18,21 @@ const PLANS = [
     bathrooms_and_wc: 2,
     plot_dimensions: "20x30",
     min_plot_dimensions_after_adaptation: "16x25",
+    floors: 2,
+    building_width: 11.5,
+    building_length: 9.5,
+    building_footprint: 72,
+    total_area: 138,
+    roof_type: "dwuspadowy",
+    roof_angle: 35,
+    garage: "jednostanowiskowy",
+    architectural_style: "tradycyjny",
+    energy_standard: "standard",
+    basement: "brak",
+    building_height: 8.5,
+    fireplace: false,
+    terrace: true,
+    house_type: "jednorodzinny",
   },
   {
     title: "Dom Parterowy Modern 90",
@@ -31,6 +46,21 @@ const PLANS = [
     bathrooms_and_wc: 1,
     plot_dimensions: "18x25",
     min_plot_dimensions_after_adaptation: "14x20",
+    floors: 1,
+    building_width: 13.0,
+    building_length: 9.0,
+    building_footprint: 105,
+    total_area: 100,
+    roof_type: "płaski",
+    roof_angle: 5,
+    garage: "brak",
+    architectural_style: "nowoczesny",
+    energy_standard: "energooszczędny",
+    basement: "brak",
+    building_height: 3.5,
+    fireplace: false,
+    terrace: true,
+    house_type: "jednorodzinny",
   },
   {
     title: "Dom z Poddaszem Rustykalny 150",
@@ -44,6 +74,21 @@ const PLANS = [
     bathrooms_and_wc: 3,
     plot_dimensions: "25x35",
     min_plot_dimensions_after_adaptation: "20x28",
+    floors: 2,
+    building_width: 12.0,
+    building_length: 11.5,
+    building_footprint: 95,
+    total_area: 165,
+    roof_type: "dwuspadowy",
+    roof_angle: 45,
+    garage: "brak",
+    architectural_style: "tradycyjny",
+    energy_standard: "standard",
+    basement: "brak",
+    building_height: 9.5,
+    fireplace: true,
+    terrace: true,
+    house_type: "jednorodzinny",
   },
   {
     title: "Dom Bliźniak Ekonomiczny 80",
@@ -57,6 +102,21 @@ const PLANS = [
     bathrooms_and_wc: 2,
     plot_dimensions: "12x20",
     min_plot_dimensions_after_adaptation: "10x18",
+    floors: 2,
+    building_width: 7.5,
+    building_length: 9.5,
+    building_footprint: 55,
+    total_area: 88,
+    roof_type: "dwuspadowy",
+    roof_angle: 30,
+    garage: "brak",
+    architectural_style: "tradycyjny",
+    energy_standard: "standard",
+    basement: "brak",
+    building_height: 7.5,
+    fireplace: false,
+    terrace: false,
+    house_type: "bliźniak",
   },
   {
     title: "Rezydencja Premium 220",
@@ -70,6 +130,21 @@ const PLANS = [
     bathrooms_and_wc: 4,
     plot_dimensions: "30x40",
     min_plot_dimensions_after_adaptation: "25x35",
+    floors: 2,
+    building_width: 16.0,
+    building_length: 13.5,
+    building_footprint: 145,
+    total_area: 240,
+    roof_type: "czterospadowy",
+    roof_angle: 40,
+    garage: "dwustanowiskowy",
+    architectural_style: "klasyczny",
+    energy_standard: "energooszczędny",
+    basement: "pełna",
+    building_height: 10.0,
+    fireplace: true,
+    terrace: true,
+    house_type: "jednorodzinny",
   },
 ]
 
@@ -88,7 +163,7 @@ export default async function seedHousePlans({ container }: ExecArgs) {
     logger.info(`Skipping creation — ${existing.length} house plan(s) already exist in the database.`)
   } else {
     allPlans = await housePlanService.createHousePlans(PLANS)
-    logger.info(`Seeded ${PLANS.length} house plans successfully.`)
+    logger.info(`Seeded ${PLANS.length} house plans successpełnay.`)
   }
 
   // Create Medusa Products and link them to house plans
@@ -185,6 +260,6 @@ export default async function seedHousePlans({ container }: ExecArgs) {
         [HOUSE_PLAN_MODULE]: { house_plan_id: plan.id },
       })
     }
-    logger.info('House plans linked to vendors successfully.')
+    logger.info('House plans linked to vendors successpełnay.')
   }
 }
