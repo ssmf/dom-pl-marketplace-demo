@@ -12,6 +12,7 @@ export interface HousePlanListParams {
   rooms?: number
   floors?: number
   garage?: string
+  basement?: string
   houseType?: string
   architecturalStyle?: string
   energyStandard?: string
@@ -37,6 +38,7 @@ export function useHousePlanService() {
         if (params.rooms !== undefined) queryParams.append('rooms', String(params.rooms))
         if (params.floors !== undefined) queryParams.append('floors', String(params.floors))
         if (params.garage !== undefined) queryParams.append('garage', params.garage)
+        if (params.basement !== undefined) queryParams.append('basement', params.basement)
         if (params.houseType !== undefined) queryParams.append('house_type', params.houseType)
         if (params.architecturalStyle !== undefined) queryParams.append('architectural_style', params.architecturalStyle)
         if (params.energyStandard !== undefined) queryParams.append('energy_standard', params.energyStandard)

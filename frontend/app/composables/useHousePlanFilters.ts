@@ -32,6 +32,7 @@ export function useHousePlanFilters() {
       rooms: route.query.rooms ? Number(route.query.rooms) : undefined,
       floors: route.query.floors ? Number(route.query.floors) : undefined,
       garage: route.query.garage ? String(route.query.garage) : undefined,
+      basement: route.query.basement ? String(route.query.basement) : undefined,
       houseType: route.query.houseType ? String(route.query.houseType) : undefined,
       architecturalStyle: route.query.architecturalStyle ? String(route.query.architecturalStyle) : undefined,
       energyStandard: route.query.energyStandard ? String(route.query.energyStandard) : undefined,
