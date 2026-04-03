@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: medusa_postgres_prod
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - medusa_network_prod
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: medusa_redis_prod
+    restart: unless-stopped
+    networks:
+      - medusa_network_prod
+
+  # Medusa Server
+  medusa:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: medusa_backend_prod
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env.production
+    networks:
+      - medusa_network_prod
+
+  # Nuxt Storefront
+  frontend:
+    build:
+      context: ./frontend
+    container_name: nuxt_frontend_prod
+    restart: unless-stopped
+    depends_on:
+      - medusa
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    environment:
+      - NUXT_PUBLIC_MEDUSA_BASE_URL=${NUXT_PUBLIC_MEDUSA_BASE_URL:-http://localhost:9000}
+      - NUXT_MEDUSA_BASE_URL=http://medusa:9000
+    networks:
+      - medusa_network_prod
+
+volumes:
+  postgres_data_prod:
+
+networks:
+  medusa_network_prod:
+    driver: bridge
