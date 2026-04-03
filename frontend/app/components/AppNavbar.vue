@@ -18,7 +18,7 @@ const cartCount = computed(() =>
 
         <div class="flex-1" />
 
-        <div class="hidden sm:flex items-center">
+        <!-- <div class="hidden sm:flex items-center">
           <UInput
             v-model="searchQuery"
             placeholder="Szukaj produktów..."
@@ -36,7 +36,7 @@ const cartCount = computed(() =>
           size="sm"
           class="sm:hidden"
           aria-label="Szukaj"
-        />
+        /> -->
 
         <UButton
           to="/konto"

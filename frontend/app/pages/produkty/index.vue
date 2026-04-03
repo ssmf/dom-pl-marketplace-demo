@@ -5,7 +5,7 @@ import HousePlanCard from "~/components/HousePlanCard.vue";
 import HousePlanFilters from "~/components/HousePlanFilters.vue";
 
 const housePlanService = useHousePlanService();
-const { page, limit, filters, serviceParams, applyFilters, clearFilters } =
+const { page, limit, filters, categoryLabel, serviceParams, applyFilters, clearFilters } =
   useHousePlanFilters();
 
 const handleApplyFilters = (newFilters: any) => {
@@ -45,8 +45,15 @@ const { data, status } = await useAsyncData(
     <!-- Main Content -->
     <main class="flex-1 p-6 lg:p-8 bg-[var(--ui-bg-elevated)]">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-default">Projekty domów</h1>
-        <p class="text-muted mt-2">Znajdź swój wymarzony projekt domu</p>
+        <div v-if="categoryLabel" class="flex items-center gap-2 text-sm text-muted mb-3">
+          <NuxtLink to="/produkty" class="hover:text-default transition-colors">Projekty domów</NuxtLink>
+          <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0" />
+          <span class="text-default font-medium">{{ categoryLabel }}</span>
+        </div>
+        <h1 class="text-3xl font-bold text-default">
+          {{ categoryLabel ?? 'Projekty domów' }}
+        </h1>
+        <p v-if="!categoryLabel" class="text-muted mt-2">Znajdź swój wymarzony projekt domu</p>
       </div>
 
       <div
