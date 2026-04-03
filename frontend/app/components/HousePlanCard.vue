@@ -49,7 +49,7 @@ const formatPrice = (price: number) => {
           <span>{{ plan.bathroomsAndWc }} łazienki</span>
         </div>
         <div v-if="plan.floors" class="flex items-center gap-1.5">
-          <UIcon name="i-lucide-layers" class="size-4" />
+          <UIcon name="i-lucide-layers" class="size-5" />
           <span>{{ plan.floors }} {{ plan.floors === 1 ? 'kondygnacja' : 'kondygnacje' }}</span>
         </div>
       </div>
