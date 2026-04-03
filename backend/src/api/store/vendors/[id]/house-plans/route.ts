@@ -3,6 +3,7 @@ import { ContainerRegistrationKeys, Modules, ProductStatus } from "@medusajs/fra
 import { HOUSE_PLAN_FIELDS } from "../../../../../modules/house_plan/fields"
 import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { HOUSE_PLAN_MODULE } from "../../../../../modules/house_plan"
+import HousePlanModuleService from "../../../../../modules/house_plan/service"
 import { VENDOR_MODULE } from "../../../../../modules/vendor"
 import type { CreateVendorHousePlanSchema } from "./validators"
 
@@ -76,6 +77,13 @@ export async function POST(
 
   if (!housePlanId) {
     return res.status(500).json({ message: "Nie udało się utworzyć planu domu" })
+  }
+
+  // Assign family if provided
+  if (body.family_id) {
+    const housePlanService: HousePlanModuleService =
+      req.scope.resolve(HOUSE_PLAN_MODULE)
+    await housePlanService.updateHousePlans({ id: housePlanId, family_id: body.family_id })
   }
 
   // Link house_plan to vendor

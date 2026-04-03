@@ -26,6 +26,7 @@ export const CreateVendorHousePlanSchema = z.object({
   fireplace: z.boolean().optional(),
   terrace: z.boolean().optional(),
   house_type: z.string().optional(),
+  family_id: z.string().optional(),
 })
 
 export type CreateVendorHousePlanSchema = z.infer<typeof CreateVendorHousePlanSchema>
