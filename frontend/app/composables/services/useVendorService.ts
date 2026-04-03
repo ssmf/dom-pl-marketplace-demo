@@ -78,5 +78,20 @@ export function useVendorService() {
     return mapToAppHousePlan(response.house_plan)
   }
 
-  return { listVendors, getVendor, getVendorHousePlans, getVendorOrders, createVendorHousePlan, deleteVendorHousePlan }
+  async function listVendorPlanFamilies(vendorId: string): Promise<{ id: string; name: string }[]> {
+    const response = await sdk.client.fetch<{ plan_families: { id: string; name: string }[] }>(
+      `/store/vendors/${vendorId}/plan-families`
+    )
+    return response.plan_families || []
+  }
+
+  async function createVendorPlanFamily(vendorId: string, name: string): Promise<{ id: string; name: string }> {
+    const response = await sdk.client.fetch<{ plan_family: { id: string; name: string } }>(
+      `/store/vendors/${vendorId}/plan-families`,
+      { method: 'POST', body: { name } }
+    )
+    return response.plan_family
+  }
+
+  return { listVendors, getVendor, getVendorHousePlans, getVendorOrders, createVendorHousePlan, deleteVendorHousePlan, listVendorPlanFamilies, createVendorPlanFamily }
 }
