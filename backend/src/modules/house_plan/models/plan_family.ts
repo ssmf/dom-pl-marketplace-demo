@@ -8,6 +8,8 @@ const PlanFamily = model.define("plan_family", {
   house_plans: model.hasMany(() => HousePlan, {
     mappedBy: "family",
   }),
-})
+}).indexes([
+  { on: ["vendor_id", "name"], unique: true },
+])
 
 export default PlanFamily

@@ -153,6 +153,16 @@ const dimensionsLabel = computed(() => {
           <h1 class="text-3xl font-bold text-default mb-2">
             {{ plan?.title }}
           </h1>
+          <div
+            v-if="plan?.family"
+            class="flex items-center gap-1.5 mb-2"
+          >
+            <UIcon
+              name="i-lucide-layers-2"
+              class="size-4 text-muted"
+            />
+            <span class="text-sm text-muted">{{ plan.family.name }}</span>
+          </div>
           <p class="text-3xl font-bold text-primary">
             {{ formatPrice(plan?.price ?? 0) }}
           </p>

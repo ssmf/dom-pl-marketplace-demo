@@ -77,9 +77,20 @@ async function submitPlan() {
       ? form.value.family_id
       : undefined
     if (form.value.family_id === '__new__' && form.value.new_family_name.trim()) {
-      const created = await createVendorPlanFamily(route.query.id as string, form.value.new_family_name.trim())
-      familyId = created.id
-      await refreshFamilies()
+      try {
+        const created = await createVendorPlanFamily(route.query.id as string, form.value.new_family_name.trim())
+        familyId = created.id
+        await refreshFamilies()
+      } catch (err: any) {
+        const msg = err?.body?.message ?? err?.message ?? ''
+        toast.add({
+          title: 'Błąd rodziny',
+          description: msg.includes('już istnieje') ? 'Rodzina o tej nazwie już istnieje.' : 'Nie udało się utworzyć rodziny.',
+          color: 'error'
+        })
+        submitting.value = false
+        return
+      }
     }
 
     await createVendorHousePlan(route.query.id as string, {

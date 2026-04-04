@@ -9,6 +9,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     entity: "house_plan",
     fields: [
       ...HOUSE_PLAN_FIELDS,
+      "family.id",
+      "family.name",
       "vendor.id",
       "vendor.company_name",
       "vendor.first_name",
