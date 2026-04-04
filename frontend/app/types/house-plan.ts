@@ -37,4 +37,5 @@ export interface AppHousePlan {
   houseType: string | null
   vendor?: HousePlanVendor | null
   variantId?: string | null
+  family?: { id: string, name: string } | null
 }

@@ -146,6 +146,67 @@ const PLANS = [
     terrace: true,
     house_type: "jednorodzinny",
   },
+  {
+    title: "Dom Willowy 160 – Wersja Klasyczna",
+    price: 3490,
+    description:
+      "Przestronny dom willowy o klasycznej bryle z dużymi oknami i elegancką elewacją. Parter z otwartą strefą dzienną, gabinetem i garażem. Piętro z czterema sypialniami i dwiema łazienkami. Projekt z rodziny Dom Willowy 160 – wersja z tradycyjnym dachem dwuspadowym.",
+    img: null,
+    house_area: 160,
+    boiler_room_area: 10,
+    rooms: 5,
+    bathrooms_and_wc: 3,
+    plot_dimensions: "22x35",
+    min_plot_dimensions_after_adaptation: "18x30",
+    floors: 2,
+    building_width: 13.5,
+    building_length: 11.0,
+    building_footprint: 100,
+    total_area: 178,
+    roof_type: "dwuspadowy",
+    roof_angle: 38,
+    garage: "jednostanowiskowy",
+    architectural_style: "tradycyjny",
+    energy_standard: "energooszczędny",
+    basement: "brak",
+    building_height: 9.0,
+    fireplace: true,
+    terrace: true,
+    house_type: "jednorodzinny",
+  },
+  {
+    title: "Dom Willowy 160 – Wersja Nowoczesna",
+    price: 3690,
+    description:
+      "Nowoczesna interpretacja projektu Dom Willowy 160 z płaskim dachem i dużymi przeszkleniami. Ten sam układ funkcjonalny co wersja klasyczna, lecz z nowoczesną elewacją i dodatkowym tarasem na dachu nad garażem. Projekt z rodziny Dom Willowy 160.",
+    img: null,
+    house_area: 160,
+    boiler_room_area: 10,
+    rooms: 5,
+    bathrooms_and_wc: 3,
+    plot_dimensions: "22x35",
+    min_plot_dimensions_after_adaptation: "18x30",
+    floors: 2,
+    building_width: 13.5,
+    building_length: 11.0,
+    building_footprint: 100,
+    total_area: 182,
+    roof_type: "płaski",
+    roof_angle: 3,
+    garage: "jednostanowiskowy",
+    architectural_style: "nowoczesny",
+    energy_standard: "pasywny",
+    basement: "brak",
+    building_height: 8.5,
+    fireplace: false,
+    terrace: true,
+    house_type: "jednorodzinny",
+  },
+]
+
+const FAMILY_PLAN_TITLES = [
+  "Dom Willowy 160 – Wersja Klasyczna",
+  "Dom Willowy 160 – Wersja Nowoczesna",
 ]
 
 export default async function seedHousePlans({ container }: ExecArgs) {
@@ -261,5 +322,38 @@ export default async function seedHousePlans({ container }: ExecArgs) {
       })
     }
     logger.info('House plans linked to vendors successpełnay.')
+  }
+
+  // Create plan family "Dom Willowy 160" for Projekty Malinowski and assign the two variant plans
+  logger.info('Setting up plan family for Projekty Malinowski...')
+  const vendorService2: VendorModuleService = container.resolve(VENDOR_MODULE)
+  const allVendors = await vendorService2.listVendors()
+  const malinowski = allVendors.find((v: any) => v.company_name === 'Projekty Malinowski')
+
+  if (malinowski) {
+    const existingFamilies = await housePlanService.listPlanFamilies({
+      vendor_id: malinowski.id,
+      name: 'Dom Willowy 160',
+    })
+
+    let family = existingFamilies[0]
+    if (!family) {
+      family = await housePlanService.createPlanFamilies({
+        name: 'Dom Willowy 160',
+        vendor_id: malinowski.id,
+      })
+      logger.info(`Created plan family "Dom Willowy 160" for ${malinowski.company_name}`)
+    } else {
+      logger.info(`Plan family "Dom Willowy 160" already exists, skipping creation.`)
+    }
+
+    const variantPlans = allPlans.filter((p: any) => FAMILY_PLAN_TITLES.includes(p.title))
+    for (const plan of variantPlans) {
+      if ((plan as any).family_id === family.id) continue
+      await housePlanService.updateHousePlans({ id: plan.id, family_id: family.id })
+      logger.info(`Assigned "${plan.title}" to family "${family.name}"`)
+    }
+  } else {
+    logger.info('Vendor "Projekty Malinowski" not found, skipping family setup.')
   }
 }

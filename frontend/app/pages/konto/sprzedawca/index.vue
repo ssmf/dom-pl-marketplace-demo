@@ -38,7 +38,9 @@ const emptyForm = () => ({
   building_height: '',
   fireplace: '',
   terrace: '',
-  house_type: ''
+  house_type: '',
+  family_id: 'none',
+  new_family_name: ''
 })
 
 type PlanForm = ReturnType<typeof emptyForm>
@@ -48,7 +50,7 @@ const numOrNull = (val: string) =>
 
 const route = useRoute()
 const toast = useToast()
-const { getVendor, getVendorHousePlans, getVendorOrders, createVendorHousePlan, deleteVendorHousePlan } = useVendorService()
+const { getVendor, getVendorHousePlans, getVendorOrders, createVendorHousePlan, deleteVendorHousePlan, listVendorPlanFamilies, createVendorPlanFamily } = useVendorService()
 
 const slideoverOpen = ref(false)
 const submitting = ref(false)
@@ -71,6 +73,26 @@ async function submitPlan() {
   if (!validateForm()) return
   submitting.value = true
   try {
+    let familyId = (form.value.family_id !== 'none' && form.value.family_id !== '__new__')
+      ? form.value.family_id
+      : undefined
+    if (form.value.family_id === '__new__' && form.value.new_family_name.trim()) {
+      try {
+        const created = await createVendorPlanFamily(route.query.id as string, form.value.new_family_name.trim())
+        familyId = created.id
+        await refreshFamilies()
+      } catch (err: any) {
+        const msg = err?.body?.message ?? err?.message ?? ''
+        toast.add({
+          title: 'Błąd rodziny',
+          description: msg.includes('już istnieje') ? 'Rodzina o tej nazwie już istnieje.' : 'Nie udało się utworzyć rodziny.',
+          color: 'error'
+        })
+        submitting.value = false
+        return
+      }
+    }
+
     await createVendorHousePlan(route.query.id as string, {
       title: form.value.title.trim(),
       price: Number(form.value.price),
@@ -95,6 +117,7 @@ async function submitPlan() {
       ...(form.value.energy_standard && { energy_standard: form.value.energy_standard }),
       ...(form.value.basement && { basement: form.value.basement }),
       ...(form.value.house_type && { house_type: form.value.house_type }),
+      ...(familyId && { family_id: familyId }),
       ...(form.value.fireplace === 'tak' && { fireplace: true }),
       ...(form.value.fireplace === 'nie' && { fireplace: false }),
       ...(form.value.terrace === 'tak' && { terrace: true }),
@@ -196,6 +219,31 @@ const recentOrders = computed<OrderRow[]>(() =>
     }
   })
 )
+
+const families = ref<Array<{ id: string, name: string }>>([])
+
+watch(slideoverOpen, async (open) => {
+  if (!open) return
+  try {
+    families.value = await listVendorPlanFamilies(route.query.id as string)
+  } catch {
+    families.value = []
+  }
+})
+
+const refreshFamilies = async () => {
+  try {
+    families.value = await listVendorPlanFamilies(route.query.id as string)
+  } catch {
+    families.value = []
+  }
+}
+
+const familyOptions = computed(() => [
+  { label: 'Brak rodziny', value: 'none' },
+  ...families.value.map(f => ({ label: f.name, value: f.id })),
+  { label: '＋ Stwórz nową rodzinę...', value: '__new__' }
+])
 
 const { data: housePlansData } = await useAsyncData(
   `vendor-house-plans-${route.query.id}`,
@@ -435,7 +483,11 @@ const statusColor = (status: string) => {
       </div>
     </UContainer>
 
-    <USlideover v-model:open="slideoverOpen" title="Nowy plan domu">
+    <USlideover
+      v-model:open="slideoverOpen"
+      class="text-xl"
+      title="Nowy plan domu"
+    >
       <template #body>
         <div class="space-y-4 p-4">
           <div class="space-y-1">
@@ -460,7 +512,37 @@ const statusColor = (status: string) => {
             <UInput v-model="form.img" placeholder="https://..." />
           </div>
 
+          <!-- Rodzina planów -->
+          <p class="text-md font-semibold text-default pt-2 underline mb-2 mt-4">
+            Rodzina planów
+          </p>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-default">Przypisz do rodziny</label>
+              <USelect
+                v-model="form.family_id"
+                :items="familyOptions"
+                value-key="value"
+                label-key="label"
+                placeholder="Wybierz lub stwórz..."
+              />
+            </div>
+            <div
+              v-if="form.family_id === '__new__'"
+              class="space-y-1 mt-2"
+            >
+              <label class="text-sm font-medium text-default">Nazwa nowej rodziny</label>
+              <UInput
+                v-model="form.new_family_name"
+                placeholder="np. Domy Bloom"
+              />
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-3">
+            <p class="text-md font-semibold text-default pt-2 underline mt-4">
+              Wymiary domu
+            </p><br>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Pow. domu (m²) *</label>
               <UInput v-model="form.house_area" type="number" placeholder="120" @input="formErrors.house_area = undefined" />
@@ -494,7 +576,9 @@ const statusColor = (status: string) => {
           </div>
 
           <!-- Bryła budynku -->
-          <p class="text-sm font-semibold text-default pt-2">Bryła budynku</p>
+          <p class="text-md font-semibold text-default pt-2 underline mb-2 mt-4">
+            Bryła budynku
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Kondygnacje</label>
@@ -523,7 +607,9 @@ const statusColor = (status: string) => {
           </div>
 
           <!-- Dach -->
-          <p class="text-sm font-semibold text-default pt-2">Dach</p>
+          <p class="text-md font-semibold text-default pt-2 underline mb-2 mt-4">
+            Dach
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Rodzaj dachu</label>
@@ -533,20 +619,21 @@ const statusColor = (status: string) => {
                   { label: 'Dwuspadowy', value: 'dwuspadowy' },
                   { label: 'Czterospadowy', value: 'czterospadowy' },
                   { label: 'Płaski', value: 'płaski' },
-                  { label: 'Mansardowy', value: 'mansardowy' },
-                  { label: 'Jednospadowy', value: 'jednospadowy' },
+                  { label: 'Jednospadowy', value: 'jednospadowy' }
                 ]"
                 placeholder="Wybierz..."
               />
             </div>
-            <div class="space-y-1">
+            <div v-if="form.roof_type != 'płaski'" class="space-y-1">
               <label class="text-sm font-medium text-default">Kąt nachylenia (°)</label>
               <UInput v-model="form.roof_angle" type="number" placeholder="35" />
             </div>
           </div>
 
           <!-- Wyposażenie -->
-          <p class="text-sm font-semibold text-default pt-2">Wyposażenie</p>
+          <p class="text-md font-semibold text-default pt-2 underline mb-2 mt-4">
+            Wyposażenie
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Garaż</label>
@@ -592,7 +679,9 @@ const statusColor = (status: string) => {
           </div>
 
           <!-- Styl i standard -->
-          <p class="text-sm font-semibold text-default pt-2">Styl i standard</p>
+          <p class="text-md font-semibold text-default pt-2 underline mb-2 mt-4">
+            Styl i standard
+          </p>
           <div class="grid grid-cols-1 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Typ domu</label>

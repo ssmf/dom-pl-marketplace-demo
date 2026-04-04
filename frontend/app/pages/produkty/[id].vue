@@ -50,6 +50,43 @@ const formatPrice = (price: number) => {
   }).format(price)
 }
 
+const { data: variants } = await useAsyncData(
+  `house-plan-variants-${id}`,
+  () => plan.value?.family
+    ? housePlanService.listHousePlans({ familyId: plan.value.family.id, limit: 10 })
+    : Promise.resolve(null),
+  { lazy: true }
+)
+
+const { data: similar } = await useAsyncData(
+  `house-plan-similar-${id}`,
+  () => housePlanService.listHousePlans({
+    floors: plan.value?.floors ?? undefined,
+    minArea: plan.value?.houseArea ? plan.value.houseArea - 30 : undefined,
+    maxArea: plan.value?.houseArea ? plan.value.houseArea + 30 : undefined,
+    limit: 5
+  }),
+  { lazy: true }
+)
+
+const { data: others } = await useAsyncData(
+  `house-plan-others-${id}`,
+  () => housePlanService.listHousePlans({ limit: 5 }),
+  { lazy: true }
+)
+
+const variantPlans = computed(() =>
+  variants.value?.data.filter(p => p.id !== id).slice(0, 8) ?? []
+)
+
+const similarPlans = computed(() =>
+  similar.value?.data.filter(p => p.id !== id).slice(0, 4) ?? []
+)
+
+const otherPlans = computed(() =>
+  others.value?.data.filter(p => p.id !== id).slice(0, 4) ?? []
+)
+
 const roofLabel = computed(() => {
   const parts = []
   if (plan.value?.roofType) parts.push(plan.value.roofType)
@@ -81,8 +118,8 @@ const dimensionsLabel = computed(() => {
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Left Column: Image and Description -->
-      <div class="space-y-8">
-        <div class="aspect-video bg-[var(--ui-bg-elevated)] flex items-center justify-center rounded-xl overflow-hidden border border-default">
+      <div class="flex flex-col gap-8">
+        <div class="aspect-video bg-elevated flex items-center justify-center rounded-xl overflow-hidden border border-default">
           <NuxtImg
             v-if="plan?.img"
             :src="plan.img"
@@ -97,23 +134,66 @@ const dimensionsLabel = computed(() => {
           />
         </div>
 
-        <div v-if="plan?.description" class="prose dark:prose-invert max-w-none text-muted">
-          <h2 class="text-xl font-semibold text-default mb-4">Opis projektu</h2>
-          <p class="whitespace-pre-line">{{ plan.description }}</p>
+        <div
+          v-if="plan?.description"
+          class="prose dark:prose-invert max-w-none text-muted"
+        >
+          <h2 class="text-xl font-semibold text-default mb-4">
+            Opis projektu
+          </h2>
+          <p class="whitespace-pre-line">
+            {{ plan.description }}
+          </p>
         </div>
+
+        <section class="flex flex-col justify-end mt-auto">
+          <!-- Warianty projektu -->
+          <HousePlanCarousel
+            v-if="variantPlans.length"
+            title="Warianty projektu"
+            :plans="variantPlans"
+          />
+          <!-- Podobne projekty -->
+          <HousePlanCarousel
+            v-if="similarPlans.length"
+            title="Podobne projekty"
+            :plans="similarPlans"
+          />
+          <HousePlanCarousel
+            v-else-if="otherPlans.length && !variantPlans.length"
+            title="Inne projekty"
+            :plans="otherPlans"
+          />
+        </section>
       </div>
 
       <!-- Right Column: Details and Action -->
       <div class="space-y-8">
         <div>
-          <h1 class="text-3xl font-bold text-default mb-2">{{ plan?.title }}</h1>
-          <p class="text-3xl font-bold text-primary">{{ formatPrice(plan?.price ?? 0) }}</p>
+          <h1 class="text-3xl font-bold text-default mb-2">
+            {{ plan?.title }}
+          </h1>
+          <div
+            v-if="plan?.family"
+            class="flex items-center gap-1.5 mb-2"
+          >
+            <UIcon
+              name="i-lucide-layers-2"
+              class="size-4 text-muted"
+            />
+            <span class="text-sm text-muted">{{ plan.family.name }}</span>
+          </div>
+          <p class="text-3xl font-bold text-primary">
+            {{ formatPrice(plan?.price ?? 0) }}
+          </p>
         </div>
 
         <!-- Vendor Card -->
         <UCard v-if="plan?.vendor">
           <template #header>
-            <h3 class="text-lg font-semibold">Sprzedawca</h3>
+            <h3 class="text-lg font-semibold">
+              Sprzedawca
+            </h3>
           </template>
 
           <div class="flex items-start gap-4">
@@ -122,11 +202,21 @@ const dimensionsLabel = computed(() => {
               size="lg"
             />
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-default truncate">{{ plan.vendor.company_name }}</p>
-              <p class="text-sm text-muted">{{ plan.vendor.first_name }} {{ plan.vendor.last_name }}</p>
+              <p class="font-semibold text-default truncate">
+                {{ plan.vendor.company_name }}
+              </p>
+              <p class="text-sm text-muted">
+                {{ plan.vendor.first_name }} {{ plan.vendor.last_name }}
+              </p>
               <div class="flex items-center gap-3 mt-2">
-                <div v-if="plan.vendor.average_rating" class="flex items-center gap-1 text-sm text-muted">
-                  <UIcon name="i-lucide-star" class="size-4 text-yellow-500" />
+                <div
+                  v-if="plan.vendor.average_rating"
+                  class="flex items-center gap-1 text-sm text-muted"
+                >
+                  <UIcon
+                    name="i-lucide-star"
+                    class="size-4 text-yellow-500"
+                  />
                   <span>{{ plan.vendor.average_rating.toFixed(1) }}</span>
                 </div>
                 <div class="flex items-center gap-1 text-sm text-muted">
@@ -153,7 +243,9 @@ const dimensionsLabel = computed(() => {
         <!-- Podstawowe parametry -->
         <UCard>
           <template #header>
-            <h3 class="text-lg font-semibold">Szczegóły projektu</h3>
+            <h3 class="text-lg font-semibold">
+              Szczegóły projektu
+            </h3>
           </template>
 
           <div class="space-y-4">
@@ -199,15 +291,24 @@ const dimensionsLabel = computed(() => {
 
             <div class="flex items-center justify-between py-2 border-b border-default last:border-0">
               <div class="flex items-center gap-2 text-muted">
-                <UIcon name="i-lucide-ruler" class="size-5" />
+                <UIcon
+                  name="i-lucide-ruler"
+                  class="size-5"
+                />
                 <span>Min. wymiary działki</span>
               </div>
               <span class="font-medium text-default">{{ plan?.plotDimensions }}</span>
             </div>
 
-            <div v-if="plan?.minPlotDimensionsAfterAdaptation" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+            <div
+              v-if="plan?.minPlotDimensionsAfterAdaptation"
+              class="flex items-center justify-between py-2 border-b border-default last:border-0"
+            >
               <div class="flex items-center gap-2 text-muted">
-                <UIcon name="i-lucide-ruler" class="size-5" />
+                <UIcon
+                  name="i-lucide-ruler"
+                  class="size-5"
+                />
                 <span>Wymiary po adaptacji</span>
               </div>
               <span class="font-medium text-default">{{ plan?.minPlotDimensionsAfterAdaptation }}</span>
@@ -231,13 +332,21 @@ const dimensionsLabel = computed(() => {
         <!-- Charakterystyka budynku -->
         <UCard>
           <template #header>
-            <h3 class="text-lg font-semibold">Charakterystyka budynku</h3>
+            <h3 class="text-lg font-semibold">
+              Charakterystyka budynku
+            </h3>
           </template>
 
           <div class="space-y-4">
-            <div v-if="plan?.houseType" class="flex items-center justify-between py-2 border-b border-default last:border-0">
+            <div
+              v-if="plan?.houseType"
+              class="flex items-center justify-between py-2 border-b border-default last:border-0"
+            >
               <div class="flex items-center gap-2 text-muted">
-                <UIcon name="i-lucide-home" class="size-5" />
+                <UIcon
+                  name="i-lucide-home"
+                  class="size-5"
+                />
                 <span>Typ domu</span>
               </div>
               <span class="font-medium text-default capitalize">{{ plan.houseType }}</span>
@@ -282,11 +391,11 @@ const dimensionsLabel = computed(() => {
               </div>
               <div class="flex items-center gap-1">
                 <UIcon
-                  :name="plan.fireplace ? 'i-lucide-check' : 'i-lucide-x'"
-                  :class="plan.fireplace ? 'text-green-500' : 'text-muted'"
+                  :name="plan?.fireplace ? 'i-lucide-check' : 'i-lucide-x'"
+                  :class="plan?.fireplace ? 'text-green-500' : 'text-muted'"
                   class="size-5"
                 />
-                <span class="font-medium text-default">{{ plan.fireplace ? 'Tak' : 'Nie' }}</span>
+                <span class="font-medium text-default">{{ plan?.fireplace ? 'Tak' : 'Nie' }}</span>
               </div>
             </div>
 
@@ -297,11 +406,11 @@ const dimensionsLabel = computed(() => {
               </div>
               <div class="flex items-center gap-1">
                 <UIcon
-                  :name="plan.terrace ? 'i-lucide-check' : 'i-lucide-x'"
-                  :class="plan.terrace ? 'text-green-500' : 'text-muted'"
+                  :name="plan?.terrace ? 'i-lucide-check' : 'i-lucide-x'"
+                  :class="plan?.terrace ? 'text-green-500' : 'text-muted'"
                   class="size-5"
                 />
-                <span class="font-medium text-default">{{ plan.terrace ? 'Tak' : 'Nie' }}</span>
+                <span class="font-medium text-default">{{ plan?.terrace ? 'Tak' : 'Nie' }}</span>
               </div>
             </div>
 
