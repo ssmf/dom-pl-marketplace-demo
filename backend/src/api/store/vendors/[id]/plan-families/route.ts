@@ -18,6 +18,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const housePlanService: HousePlanModuleService =
     req.scope.resolve(HOUSE_PLAN_MODULE)
 
+  const existing = await housePlanService.listPlanFamilies({ vendor_id: vendorId, name })
+  if (existing.length > 0) {
+    return res.status(409).json({ message: "Rodzina o tej nazwie już istnieje" })
+  }
+
   const family = await housePlanService.createPlanFamilies({
     name,
     vendor_id: vendorId,
