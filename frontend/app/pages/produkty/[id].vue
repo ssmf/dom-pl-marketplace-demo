@@ -50,6 +50,14 @@ const formatPrice = (price: number) => {
   }).format(price)
 }
 
+const { data: variants } = await useAsyncData(
+  `house-plan-variants-${id}`,
+  () => plan.value?.family
+    ? housePlanService.listHousePlans({ familyId: plan.value.family.id, limit: 10 })
+    : Promise.resolve(null),
+  { lazy: true }
+)
+
 const { data: similar } = await useAsyncData(
   `house-plan-similar-${id}`,
   () => housePlanService.listHousePlans({
@@ -65,6 +73,10 @@ const { data: others } = await useAsyncData(
   `house-plan-others-${id}`,
   () => housePlanService.listHousePlans({ limit: 5 }),
   { lazy: true }
+)
+
+const variantPlans = computed(() =>
+  variants.value?.data.filter(p => p.id !== id).slice(0, 8) ?? []
 )
 
 const similarPlans = computed(() =>
@@ -106,7 +118,7 @@ const dimensionsLabel = computed(() => {
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Left Column: Image and Description -->
-      <div class="space-y-8">
+      <div class="flex flex-col gap-8">
         <div class="aspect-video bg-elevated flex items-center justify-center rounded-xl overflow-hidden border border-default">
           <NuxtImg
             v-if="plan?.img"
@@ -134,17 +146,25 @@ const dimensionsLabel = computed(() => {
           </p>
         </div>
 
-        <!-- Podobne projekty -->
-        <HousePlanCarousel
-          v-if="similarPlans.length"
-          title="Podobne projekty"
-          :plans="similarPlans"
-        />
-        <HousePlanCarousel
-          v-else-if="otherPlans.length"
-          title="Inne projekty"
-          :plans="otherPlans"
-        />
+        <section class="flex flex-col justify-end mt-auto">
+          <!-- Warianty projektu -->
+          <HousePlanCarousel
+            v-if="variantPlans.length"
+            title="Warianty projektu"
+            :plans="variantPlans"
+          />
+          <!-- Podobne projekty -->
+          <HousePlanCarousel
+            v-if="similarPlans.length"
+            title="Podobne projekty"
+            :plans="similarPlans"
+          />
+          <HousePlanCarousel
+            v-else-if="otherPlans.length && !variantPlans.length"
+            title="Inne projekty"
+            :plans="otherPlans"
+          />
+        </section>
       </div>
 
       <!-- Right Column: Details and Action -->

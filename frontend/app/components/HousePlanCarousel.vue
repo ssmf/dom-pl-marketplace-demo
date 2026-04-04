@@ -16,13 +16,13 @@ const scroll = (dir: 1 | -1) => {
 
 <template>
   <div>
-    <h2 class="text-xl font-semibold text-default mb-4 mt-30">
+    <h2 class="text-xl font-semibold text-default mb-4 mt-10">
       {{ title }}
     </h2>
-    <div class="relative">
+    <div class="relative mt-5">
       <div
         ref="trackRef"
-        class="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2"
+        class="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
       >
         <div
           v-for="plan in plans"
