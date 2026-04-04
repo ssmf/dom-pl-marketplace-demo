@@ -43,6 +43,7 @@ type HousePlan = {
   fireplace: boolean | null
   terrace: boolean | null
   house_type: string | null
+  family: { id: string; name: string } | null
   created_at: string
   updated_at: string
 }
@@ -288,6 +289,9 @@ const HousePlanDetailsWidget = ({ data: product }: DetailWidgetProps<AdminProduc
 
         <div className="pt-0 space-y-0">
           <DetailRow label="Cena" value={formatPLN(housePlan.price)} />
+          {housePlan.family && (
+            <DetailRow label="Rodzina projektów" value={housePlan.family.name} />
+          )}
           <DetailRow label="Powierzchnia użytkowa" value={`${housePlan.house_area} m²`} />
           {housePlan.boiler_room_area != null && (
             <DetailRow label="Powierzchnia kotłowni" value={`${housePlan.boiler_room_area} m²`} />
