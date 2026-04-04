@@ -16,6 +16,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     fields: [
       "id",
       ...HOUSE_PLAN_FIELDS.map(f => `house_plans.${f}`),
+      "house_plans.family.id",
+      "house_plans.family.name",
     ],
     filters: { id },
   })
