@@ -6,6 +6,20 @@ Headless e-commerce store. Backend: **Medusa v2** + PostgreSQL (Docker). Fronten
 
 ## Setup
 
+### Full Stack (Docker Compose)
+
+To run everything at once from the project root:
+
+```bash
+docker compose up --build -d
+```
+
+Create the first admin user (after containers are up):
+
+```bash
+docker compose run --rm medusa yarn medusa user -e admin@admin.com -p admin
+```
+
 ### Backend (Docker)
 
 ```bash
