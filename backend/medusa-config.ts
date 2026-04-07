@@ -13,9 +13,9 @@ module.exports = defineConfig({
   ],
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: process.env.REDIS_URL,
     databaseDriverOptions: {
-      ssL: false,
-      sslmode: "disable",
+      ssl: false,
     },
     http: {
       storeCors: process.env.STORE_CORS!,
@@ -24,6 +24,10 @@ module.exports = defineConfig({
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
+    cookieOptions: {
+      sameSite: "lax",
+      secure: false,
+    }
   },
   admin: {
     vite: (config) => {
