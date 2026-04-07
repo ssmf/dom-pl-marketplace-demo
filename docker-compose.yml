@@ -29,6 +29,7 @@ services:
   # This service runs the Medusa backend application
   # and the admin dashboard.
   medusa:
+  # image: ghcr.io/waybetterdigital/dom-pl-marketplace-demo-medusa:latest
     build: 
       context: ./backend
     container_name: medusa_backend
@@ -53,6 +54,7 @@ services:
 
   # Nuxt Storefront
   frontend:
+  # image: ghcr.io/waybetterdigital/dom-pl-marketplace-demo-frontend:latest
     build:
       context: ./frontend
     container_name: nuxt_frontend
