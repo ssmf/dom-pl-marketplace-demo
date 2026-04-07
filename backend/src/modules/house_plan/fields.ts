@@ -27,4 +27,6 @@ export const HOUSE_PLAN_FIELDS = [
   "house_type",
   "created_at",
   "updated_at",
+  "family.id",
+  "family.name",
 ] as const

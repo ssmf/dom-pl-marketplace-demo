@@ -30,5 +30,6 @@ export function mapToAppHousePlan(raw: any): AppHousePlan {
     houseType: raw.house_type ?? null,
     vendor: raw.vendor ?? null,
     variantId: raw.variant_id ?? null,
+    family: raw.family ?? null,
   }
 }

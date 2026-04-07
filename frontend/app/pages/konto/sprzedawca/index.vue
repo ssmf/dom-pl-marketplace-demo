@@ -2,6 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useVendorService } from '~/composables/services/useVendorService'
 import type { AppOrder } from '~/types/order'
+import type { AppHousePlan } from '~/types/house-plan'
 
 type OrderRow = {
   id: string
@@ -38,7 +39,9 @@ const emptyForm = () => ({
   building_height: '',
   fireplace: '',
   terrace: '',
-  house_type: ''
+  house_type: '',
+  family_id: 'none',
+  new_family_name: ''
 })
 
 type PlanForm = ReturnType<typeof emptyForm>
@@ -48,21 +51,38 @@ const numOrNull = (val: string) =>
 
 const route = useRoute()
 const toast = useToast()
-const { getVendor, getVendorHousePlans, getVendorOrders, createVendorHousePlan, deleteVendorHousePlan } = useVendorService()
+const {
+  getVendor,
+  getVendorHousePlans,
+  getVendorOrders,
+  createVendorHousePlan,
+  deleteVendorHousePlan,
+  listVendorPlanFamilies,
+  createVendorPlanFamily
+} = useVendorService()
 
 const slideoverOpen = ref(false)
 const submitting = ref(false)
 const form = ref<PlanForm>(emptyForm())
 const formErrors = ref<Partial<PlanForm>>({})
+const sourcePlanId = ref('')
 
 function validateForm(): boolean {
   const e: Partial<PlanForm> = {}
   if (!form.value.title.trim()) e.title = 'Tytuł jest wymagany'
-  if (!form.value.price || isNaN(Number(form.value.price))) e.price = 'Podaj poprawną cenę'
-  if (!form.value.house_area || isNaN(Number(form.value.house_area))) e.house_area = 'Podaj powierzchnię'
-  if (!form.value.rooms || isNaN(Number(form.value.rooms))) e.rooms = 'Podaj liczbę pokoi'
-  if (!form.value.bathrooms_and_wc || isNaN(Number(form.value.bathrooms_and_wc))) e.bathrooms_and_wc = 'Podaj liczbę łazienek'
-  if (!form.value.plot_dimensions.trim()) e.plot_dimensions = 'Wymiary działki są wymagane'
+  if (!form.value.price || isNaN(Number(form.value.price)))
+    e.price = 'Podaj poprawną cenę'
+  if (!form.value.house_area || isNaN(Number(form.value.house_area)))
+    e.house_area = 'Podaj powierzchnię'
+  if (!form.value.rooms || isNaN(Number(form.value.rooms)))
+    e.rooms = 'Podaj liczbę pokoi'
+  if (
+    !form.value.bathrooms_and_wc
+    || isNaN(Number(form.value.bathrooms_and_wc))
+  )
+    e.bathrooms_and_wc = 'Podaj liczbę łazienek'
+  if (!form.value.plot_dimensions.trim())
+    e.plot_dimensions = 'Wymiary działki są wymagane'
   formErrors.value = e
   return Object.keys(e).length === 0
 }
@@ -71,6 +91,35 @@ async function submitPlan() {
   if (!validateForm()) return
   submitting.value = true
   try {
+    let familyId
+      = form.value.family_id !== 'none' && form.value.family_id !== '__new__'
+        ? form.value.family_id
+        : undefined
+    if (
+      form.value.family_id === '__new__'
+      && form.value.new_family_name.trim()
+    ) {
+      try {
+        const created = await createVendorPlanFamily(
+          route.query.id as string,
+          form.value.new_family_name.trim()
+        )
+        familyId = created.id
+        await refreshFamilies()
+      } catch (err: any) {
+        const msg = err?.body?.message ?? err?.message ?? ''
+        toast.add({
+          title: 'Błąd rodziny',
+          description: msg.includes('już istnieje')
+            ? 'Rodzina o tej nazwie już istnieje.'
+            : 'Nie udało się utworzyć rodziny.',
+          color: 'error'
+        })
+        submitting.value = false
+        return
+      }
+    }
+
     await createVendorHousePlan(route.query.id as string, {
       title: form.value.title.trim(),
       price: Number(form.value.price),
@@ -78,29 +127,60 @@ async function submitPlan() {
       rooms: Number(form.value.rooms),
       bathrooms_and_wc: Number(form.value.bathrooms_and_wc),
       plot_dimensions: form.value.plot_dimensions.trim(),
-      ...(form.value.description.trim() && { description: form.value.description.trim() }),
+      ...(form.value.description.trim() && {
+        description: form.value.description.trim()
+      }),
       ...(form.value.img.trim() && { img: form.value.img.trim() }),
-      ...(form.value.boiler_room_area && !isNaN(Number(form.value.boiler_room_area)) && { boiler_room_area: Number(form.value.boiler_room_area) }),
-      ...(form.value.min_plot_dimensions_after_adaptation.trim() && { min_plot_dimensions_after_adaptation: form.value.min_plot_dimensions_after_adaptation.trim() }),
-      ...(numOrNull(form.value.floors) !== undefined && { floors: numOrNull(form.value.floors) }),
-      ...(numOrNull(form.value.building_width) !== undefined && { building_width: numOrNull(form.value.building_width) }),
-      ...(numOrNull(form.value.building_length) !== undefined && { building_length: numOrNull(form.value.building_length) }),
-      ...(numOrNull(form.value.building_footprint) !== undefined && { building_footprint: numOrNull(form.value.building_footprint) }),
-      ...(numOrNull(form.value.total_area) !== undefined && { total_area: numOrNull(form.value.total_area) }),
-      ...(numOrNull(form.value.building_height) !== undefined && { building_height: numOrNull(form.value.building_height) }),
-      ...(numOrNull(form.value.roof_angle) !== undefined && { roof_angle: numOrNull(form.value.roof_angle) }),
+      ...(form.value.boiler_room_area
+        && !isNaN(Number(form.value.boiler_room_area)) && {
+        boiler_room_area: Number(form.value.boiler_room_area)
+      }),
+      ...(form.value.min_plot_dimensions_after_adaptation.trim() && {
+        min_plot_dimensions_after_adaptation:
+          form.value.min_plot_dimensions_after_adaptation.trim()
+      }),
+      ...(numOrNull(form.value.floors) !== undefined && {
+        floors: numOrNull(form.value.floors)
+      }),
+      ...(numOrNull(form.value.building_width) !== undefined && {
+        building_width: numOrNull(form.value.building_width)
+      }),
+      ...(numOrNull(form.value.building_length) !== undefined && {
+        building_length: numOrNull(form.value.building_length)
+      }),
+      ...(numOrNull(form.value.building_footprint) !== undefined && {
+        building_footprint: numOrNull(form.value.building_footprint)
+      }),
+      ...(numOrNull(form.value.total_area) !== undefined && {
+        total_area: numOrNull(form.value.total_area)
+      }),
+      ...(numOrNull(form.value.building_height) !== undefined && {
+        building_height: numOrNull(form.value.building_height)
+      }),
+      ...(numOrNull(form.value.roof_angle) !== undefined && {
+        roof_angle: numOrNull(form.value.roof_angle)
+      }),
       ...(form.value.roof_type && { roof_type: form.value.roof_type }),
       ...(form.value.garage && { garage: form.value.garage }),
-      ...(form.value.architectural_style && { architectural_style: form.value.architectural_style }),
-      ...(form.value.energy_standard && { energy_standard: form.value.energy_standard }),
+      ...(form.value.architectural_style && {
+        architectural_style: form.value.architectural_style
+      }),
+      ...(form.value.energy_standard && {
+        energy_standard: form.value.energy_standard
+      }),
       ...(form.value.basement && { basement: form.value.basement }),
       ...(form.value.house_type && { house_type: form.value.house_type }),
+      ...(familyId && { family_id: familyId }),
       ...(form.value.fireplace === 'tak' && { fireplace: true }),
       ...(form.value.fireplace === 'nie' && { fireplace: false }),
       ...(form.value.terrace === 'tak' && { terrace: true }),
-      ...(form.value.terrace === 'nie' && { terrace: false }),
+      ...(form.value.terrace === 'nie' && { terrace: false })
     })
-    toast.add({ title: 'Plan dodany', description: 'Plan domu został opublikowany.', color: 'success' })
+    toast.add({
+      title: 'Plan dodany',
+      description: 'Plan domu został opublikowany.',
+      color: 'success'
+    })
     slideoverOpen.value = false
     form.value = emptyForm()
     await Promise.all([
@@ -108,7 +188,11 @@ async function submitPlan() {
       refreshNuxtData(`vendor-house-plans-${route.query.id}`)
     ])
   } catch {
-    toast.add({ title: 'Błąd', description: 'Nie udało się dodać planu.', color: 'error' })
+    toast.add({
+      title: 'Błąd',
+      description: 'Nie udało się dodać planu.',
+      color: 'error'
+    })
   } finally {
     submitting.value = false
   }
@@ -127,7 +211,9 @@ const { data: ordersData, pending: ordersPending } = useAsyncData(
 )
 
 const vendor = computed(() => ({
-  name: vendorData.value ? `${vendorData.value.first_name} ${vendorData.value.last_name}` : '—',
+  name: vendorData.value
+    ? `${vendorData.value.first_name} ${vendorData.value.last_name}`
+    : '—',
   company: vendorData.value?.company_name ?? '—',
   createdAt: vendorData.value?.created_at
     ? vendorData.value.created_at.slice(0, 10).split('-').reverse().join('.')
@@ -135,7 +221,11 @@ const vendor = computed(() => ({
 }))
 
 const formatPLN = (value: number) =>
-  value.toLocaleString('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 })
+  value.toLocaleString('pl-PL', {
+    style: 'currency',
+    currency: 'PLN',
+    maximumFractionDigits: 0
+  })
 
 const ordersCount = computed(() => ordersData.value?.length ?? 0)
 
@@ -155,14 +245,17 @@ const stats = computed(() => [
   {
     label: 'Przychód',
     value: ordersData.value
-      ? formatPLN((ordersData.value).reduce((sum, o) => sum + Number(o.total), 0))
+      ? formatPLN(ordersData.value.reduce((sum, o) => sum + Number(o.total), 0))
       : '—',
     icon: 'i-lucide-banknote',
     trend: ''
   },
   {
     label: 'Średnia ocena',
-    value: vendorData.value?.average_rating != null ? String(vendorData.value.average_rating) : '—',
+    value:
+      vendorData.value?.average_rating != null
+        ? String(vendorData.value.average_rating)
+        : '—',
     icon: 'i-lucide-star',
     trend: ''
   }
@@ -181,14 +274,18 @@ const statusLabel = (status: string) => {
 
 const recentOrders = computed<OrderRow[]>(() =>
   (ordersData.value ?? []).slice(0, 10).map((o: AppOrder) => {
-    const itemTotal = o.items.reduce((sum, i) => sum + Number(i.unit_price) * Number(i.quantity), 0)
+    const itemTotal = o.items.reduce(
+      (sum, i) => sum + Number(i.unit_price) * Number(i.quantity),
+      0
+    )
     const total = Number(o.total)
     return {
       id: '#' + o.id.slice(-6).toUpperCase(),
       orderId: o.id,
-      products: o.items.length === 1
-        ? (o.items[0]?.title ?? '—')
-        : `${o.items.length} produkty`,
+      products:
+        o.items.length === 1
+          ? (o.items[0]?.title ?? '—')
+          : `${o.items.length} produkty`,
       buyer: o.email ?? '—',
       date: new Date(o.created_at).toLocaleDateString('pl-PL'),
       status: statusLabel(o.status),
@@ -196,6 +293,31 @@ const recentOrders = computed<OrderRow[]>(() =>
     }
   })
 )
+
+const families = ref<Array<{ id: string, name: string }>>([])
+
+watch(slideoverOpen, async (open) => {
+  if (!open) return
+  try {
+    families.value = await listVendorPlanFamilies(route.query.id as string)
+  } catch {
+    families.value = []
+  }
+})
+
+const refreshFamilies = async () => {
+  try {
+    families.value = await listVendorPlanFamilies(route.query.id as string)
+  } catch {
+    families.value = []
+  }
+}
+
+const familyOptions = computed(() => [
+  { label: 'Brak rodziny', value: 'none' },
+  ...families.value.map(f => ({ label: f.name, value: f.id })),
+  { label: '＋ Stwórz nową rodzinę...', value: '__new__' }
+])
 
 const { data: housePlansData } = await useAsyncData(
   `vendor-house-plans-${route.query.id}`,
@@ -211,6 +333,94 @@ const myPlans = computed(() =>
   }))
 )
 
+const currentFamilyPlans = computed(() => {
+  if (form.value.family_id === 'none' || form.value.family_id === '__new__')
+    return []
+  return (housePlansData.value ?? []).filter(
+    plan => plan.family?.id === form.value.family_id
+  )
+})
+
+const sourcePlanOptions = computed(() =>
+  currentFamilyPlans.value.map(plan => ({
+    label: `${plan.title} (${formatPLN(plan.price)})`,
+    value: plan.id
+  }))
+)
+
+function boolToTakNie(val: boolean | null): string {
+  if (val === true) return 'tak'
+  if (val === false) return 'nie'
+  return ''
+}
+
+function toFormString(val: number | null): string {
+  if (val == null || Number.isNaN(val) || val <= 0) return ''
+  return String(val)
+}
+
+function mapPlanToPrefill(plan: AppHousePlan): Partial<PlanForm> {
+  return {
+    description: plan.description ?? '',
+    img: plan.img ?? '',
+    house_area: toFormString(plan.houseArea),
+    boiler_room_area: toFormString(plan.boilerRoomArea),
+    rooms: toFormString(plan.rooms),
+    bathrooms_and_wc: toFormString(plan.bathroomsAndWc),
+    plot_dimensions: plan.plotDimensions ?? '',
+    min_plot_dimensions_after_adaptation:
+      plan.minPlotDimensionsAfterAdaptation ?? '',
+    floors: toFormString(plan.floors),
+    building_width: toFormString(plan.buildingWidth),
+    building_length: toFormString(plan.buildingLength),
+    building_footprint: toFormString(plan.buildingFootprint),
+    total_area: toFormString(plan.totalArea),
+    roof_type: plan.roofType ?? '',
+    roof_angle: toFormString(plan.roofAngle),
+    garage: plan.garage ?? '',
+    architectural_style: plan.architecturalStyle ?? '',
+    energy_standard: plan.energyStandard ?? '',
+    basement: plan.basement ?? '',
+    building_height: toFormString(plan.buildingHeight),
+    fireplace: boolToTakNie(plan.fireplace),
+    terrace: boolToTakNie(plan.terrace),
+    house_type: plan.houseType ?? ''
+  }
+}
+
+function applyPrefillToEmptyFields(prefill: Partial<PlanForm>) {
+  const next = { ...form.value }
+  for (const [key, value] of Object.entries(prefill)) {
+    const typedKey = key as keyof PlanForm
+    if (typeof value !== 'string' || !value.trim()) continue
+    if (!next[typedKey].trim()) next[typedKey] = value
+  }
+  form.value = next
+}
+
+watch(
+  () => form.value.family_id,
+  (familyId) => {
+    sourcePlanId.value = ''
+    if (familyId === 'none' || familyId === '__new__') return
+    if (!currentFamilyPlans.value.length) return
+  }
+)
+
+watch(sourcePlanId, (planId) => {
+  if (!planId) return
+  const sourcePlan = currentFamilyPlans.value.find(
+    plan => plan.id === planId
+  )
+  if (!sourcePlan) return
+  applyPrefillToEmptyFields(mapPlanToPrefill(sourcePlan))
+  toast.add({
+    title: 'Uzupełniono pola',
+    description: 'Wypełniono puste pola danymi z wybranego planu.',
+    color: 'success'
+  })
+})
+
 async function deletePlan(planId: string) {
   if (!confirm('Czy na pewno chcesz usunąć ten plan?')) return
   try {
@@ -221,7 +431,11 @@ async function deletePlan(planId: string) {
       refreshNuxtData(`vendor-house-plans-${route.query.id}`)
     ])
   } catch {
-    toast.add({ title: 'Błąd', description: 'Nie udało się usunąć planu.', color: 'error' })
+    toast.add({
+      title: 'Błąd',
+      description: 'Nie udało się usunąć planu.',
+      color: 'error'
+    })
   }
 }
 
@@ -247,7 +461,9 @@ const statusColor = (status: string) => {
   <div>
     <UContainer class="py-8 space-y-8">
       <!-- Header -->
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div class="flex items-center gap-4">
           <UAvatar
             :alt="vendor.name"
@@ -393,7 +609,9 @@ const statusColor = (status: string) => {
                     :to="`/produkty/${plan.id}`"
                     class="min-w-0 flex-1 group"
                   >
-                    <p class="truncate text-sm font-medium text-default group-hover:text-primary transition-colors">
+                    <p
+                      class="truncate text-sm font-medium text-default group-hover:text-primary transition-colors"
+                    >
                       {{ plan.title }}
                     </p>
                     <p class="text-xs text-muted">
@@ -435,95 +653,256 @@ const statusColor = (status: string) => {
       </div>
     </UContainer>
 
-    <USlideover v-model:open="slideoverOpen" title="Nowy plan domu">
+    <USlideover
+      v-model:open="slideoverOpen"
+      class="text-xl"
+      title="Nowy plan domu"
+    >
       <template #body>
         <div class="space-y-4 p-4">
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">Tytuł *</label>
-            <UInput v-model="form.title" placeholder="np. Dom Parterowy 120" @input="formErrors.title = undefined" />
-            <p v-if="formErrors.title" class="text-xs text-error">{{ formErrors.title }}</p>
+            <UInput
+              v-model="form.title"
+              placeholder="np. Dom Parterowy 120"
+              @input="formErrors.title = undefined"
+            />
+            <p
+              v-if="formErrors.title"
+              class="text-xs text-error"
+            >
+              {{ formErrors.title }}
+            </p>
           </div>
 
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">Cena (PLN) *</label>
-            <UInput v-model="form.price" type="number" placeholder="2990" @input="formErrors.price = undefined" />
-            <p v-if="formErrors.price" class="text-xs text-error">{{ formErrors.price }}</p>
+            <UInput
+              v-model="form.price"
+              type="number"
+              placeholder="2990"
+              @input="formErrors.price = undefined"
+            />
+            <p
+              v-if="formErrors.price"
+              class="text-xs text-error"
+            >
+              {{ formErrors.price }}
+            </p>
           </div>
 
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">Opis</label>
-            <UTextarea v-model="form.description" placeholder="Opis projektu..." :rows="3" />
+            <UTextarea
+              v-model="form.description"
+              placeholder="Opis projektu..."
+              :rows="3"
+            />
           </div>
 
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">URL zdjęcia</label>
-            <UInput v-model="form.img" placeholder="https://..." />
+            <UInput
+              v-model="form.img"
+              placeholder="https://..."
+            />
+          </div>
+
+          <!-- Rodzina planów -->
+          <p
+            class="text-md font-semibold text-default pt-2 underline mb-2 mt-4"
+          >
+            Rodzina planów
+          </p>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-default">Przypisz do rodziny</label>
+              <USelect
+                v-model="form.family_id"
+                :items="familyOptions"
+                value-key="value"
+                label-key="label"
+                placeholder="Wybierz lub stwórz..."
+              />
+            </div>
+            <div
+              v-if="form.family_id === '__new__'"
+              class="space-y-1 mt-2"
+            >
+              <label class="text-sm font-medium text-default">Nazwa nowej rodziny</label>
+              <UInput
+                v-model="form.new_family_name"
+                placeholder="np. Domy Bloom"
+              />
+            </div>
+            <div
+              v-if="form.family_id !== 'none' && form.family_id !== '__new__'"
+              class="space-y-1 mt-2"
+            >
+              <label class="text-sm font-medium text-default">Skopiuj domyślne dane z planu</label>
+              <USelect
+                v-if="sourcePlanOptions.length"
+                v-model="sourcePlanId"
+                :items="sourcePlanOptions"
+                value-key="value"
+                label-key="label"
+                placeholder="Wybierz plan źródłowy..."
+              />
+              <p
+                v-else
+                class="text-xs text-muted"
+              >
+                Ta rodzina nie ma jeszcze planów do skopiowania.
+              </p>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
+            <p class="text-md font-semibold text-default pt-2 underline mt-4">
+              Wymiary domu
+            </p>
+            <br>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Pow. domu (m²) *</label>
-              <UInput v-model="form.house_area" type="number" placeholder="120" @input="formErrors.house_area = undefined" />
-              <p v-if="formErrors.house_area" class="text-xs text-error">{{ formErrors.house_area }}</p>
+              <UInput
+                v-model="form.house_area"
+                type="number"
+                placeholder="120"
+                @input="formErrors.house_area = undefined"
+              />
+              <p
+                v-if="formErrors.house_area"
+                class="text-xs text-error"
+              >
+                {{ formErrors.house_area }}
+              </p>
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Pow. kotłowni (m²)</label>
-              <UInput v-model="form.boiler_room_area" type="number" placeholder="8" />
+              <UInput
+                v-model="form.boiler_room_area"
+                type="number"
+                placeholder="8"
+              />
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Pokoje *</label>
-              <UInput v-model="form.rooms" type="number" placeholder="4" @input="formErrors.rooms = undefined" />
-              <p v-if="formErrors.rooms" class="text-xs text-error">{{ formErrors.rooms }}</p>
+              <UInput
+                v-model="form.rooms"
+                type="number"
+                placeholder="4"
+                @input="formErrors.rooms = undefined"
+              />
+              <p
+                v-if="formErrors.rooms"
+                class="text-xs text-error"
+              >
+                {{ formErrors.rooms }}
+              </p>
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Łazienki i WC *</label>
-              <UInput v-model="form.bathrooms_and_wc" type="number" placeholder="2" @input="formErrors.bathrooms_and_wc = undefined" />
-              <p v-if="formErrors.bathrooms_and_wc" class="text-xs text-error">{{ formErrors.bathrooms_and_wc }}</p>
+              <UInput
+                v-model="form.bathrooms_and_wc"
+                type="number"
+                placeholder="2"
+                @input="formErrors.bathrooms_and_wc = undefined"
+              />
+              <p
+                v-if="formErrors.bathrooms_and_wc"
+                class="text-xs text-error"
+              >
+                {{ formErrors.bathrooms_and_wc }}
+              </p>
             </div>
           </div>
 
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">Wymiary działki (np. 15x20) *</label>
-            <UInput v-model="form.plot_dimensions" placeholder="15x20" @input="formErrors.plot_dimensions = undefined" />
-            <p v-if="formErrors.plot_dimensions" class="text-xs text-error">{{ formErrors.plot_dimensions }}</p>
+            <UInput
+              v-model="form.plot_dimensions"
+              placeholder="15x20"
+              @input="formErrors.plot_dimensions = undefined"
+            />
+            <p
+              v-if="formErrors.plot_dimensions"
+              class="text-xs text-error"
+            >
+              {{ formErrors.plot_dimensions }}
+            </p>
           </div>
 
           <div class="space-y-1">
             <label class="text-sm font-medium text-default">Min. wymiary po adaptacji</label>
-            <UInput v-model="form.min_plot_dimensions_after_adaptation" placeholder="12x18" />
+            <UInput
+              v-model="form.min_plot_dimensions_after_adaptation"
+              placeholder="12x18"
+            />
           </div>
 
           <!-- Bryła budynku -->
-          <p class="text-sm font-semibold text-default pt-2">Bryła budynku</p>
+          <p
+            class="text-md font-semibold text-default pt-2 underline mb-2 mt-4"
+          >
+            Bryła budynku
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Kondygnacje</label>
-              <UInput v-model="form.floors" type="number" placeholder="2" />
+              <UInput
+                v-model="form.floors"
+                type="number"
+                placeholder="2"
+              />
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Wysokość (m)</label>
-              <UInput v-model="form.building_height" type="number" placeholder="8.5" />
+              <UInput
+                v-model="form.building_height"
+                type="number"
+                placeholder="8.5"
+              />
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Szerokość (m)</label>
-              <UInput v-model="form.building_width" type="number" placeholder="11.5" />
+              <UInput
+                v-model="form.building_width"
+                type="number"
+                placeholder="11.5"
+              />
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Długość (m)</label>
-              <UInput v-model="form.building_length" type="number" placeholder="9.5" />
+              <UInput
+                v-model="form.building_length"
+                type="number"
+                placeholder="9.5"
+              />
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Pow. zabudowy (m²)</label>
-              <UInput v-model="form.building_footprint" type="number" placeholder="72" />
+              <UInput
+                v-model="form.building_footprint"
+                type="number"
+                placeholder="72"
+              />
             </div>
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Pow. całkowita (m²)</label>
-              <UInput v-model="form.total_area" type="number" placeholder="138" />
+              <UInput
+                v-model="form.total_area"
+                type="number"
+                placeholder="138"
+              />
             </div>
           </div>
 
           <!-- Dach -->
-          <p class="text-sm font-semibold text-default pt-2">Dach</p>
+          <p
+            class="text-md font-semibold text-default pt-2 underline mb-2 mt-4"
+          >
+            Dach
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Rodzaj dachu</label>
@@ -533,20 +912,30 @@ const statusColor = (status: string) => {
                   { label: 'Dwuspadowy', value: 'dwuspadowy' },
                   { label: 'Czterospadowy', value: 'czterospadowy' },
                   { label: 'Płaski', value: 'płaski' },
-                  { label: 'Mansardowy', value: 'mansardowy' },
-                  { label: 'Jednospadowy', value: 'jednospadowy' },
+                  { label: 'Jednospadowy', value: 'jednospadowy' }
                 ]"
                 placeholder="Wybierz..."
               />
             </div>
-            <div class="space-y-1">
+            <div
+              v-if="form.roof_type != 'płaski'"
+              class="space-y-1"
+            >
               <label class="text-sm font-medium text-default">Kąt nachylenia (°)</label>
-              <UInput v-model="form.roof_angle" type="number" placeholder="35" />
+              <UInput
+                v-model="form.roof_angle"
+                type="number"
+                placeholder="35"
+              />
             </div>
           </div>
 
           <!-- Wyposażenie -->
-          <p class="text-sm font-semibold text-default pt-2">Wyposażenie</p>
+          <p
+            class="text-md font-semibold text-default pt-2 underline mb-2 mt-4"
+          >
+            Wyposażenie
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Garaż</label>
@@ -556,7 +945,7 @@ const statusColor = (status: string) => {
                   { label: 'Brak', value: 'brak' },
                   { label: 'Jednostanowiskowy', value: 'jednostanowiskowy' },
                   { label: 'Dwustanowiskowy', value: 'dwustanowiskowy' },
-                  { label: 'Trzystanowiskowy', value: 'trzystanowiskowy' },
+                  { label: 'Trzystanowiskowy', value: 'trzystanowiskowy' }
                 ]"
                 placeholder="Wybierz..."
               />
@@ -568,7 +957,7 @@ const statusColor = (status: string) => {
                 :items="[
                   { label: 'Brak', value: 'brak' },
                   { label: 'Częściowa', value: 'częściowa' },
-                  { label: 'Pełna', value: 'pełna' },
+                  { label: 'Pełna', value: 'pełna' }
                 ]"
                 placeholder="Wybierz..."
               />
@@ -577,7 +966,10 @@ const statusColor = (status: string) => {
               <label class="text-sm font-medium text-default">Kominek</label>
               <USelect
                 v-model="form.fireplace"
-                :items="[{ label: 'Tak', value: 'tak' }, { label: 'Nie', value: 'nie' }]"
+                :items="[
+                  { label: 'Tak', value: 'tak' },
+                  { label: 'Nie', value: 'nie' }
+                ]"
                 placeholder="Wybierz..."
               />
             </div>
@@ -585,14 +977,21 @@ const statusColor = (status: string) => {
               <label class="text-sm font-medium text-default">Taras</label>
               <USelect
                 v-model="form.terrace"
-                :items="[{ label: 'Tak', value: 'tak' }, { label: 'Nie', value: 'nie' }]"
+                :items="[
+                  { label: 'Tak', value: 'tak' },
+                  { label: 'Nie', value: 'nie' }
+                ]"
                 placeholder="Wybierz..."
               />
             </div>
           </div>
 
           <!-- Styl i standard -->
-          <p class="text-sm font-semibold text-default pt-2">Styl i standard</p>
+          <p
+            class="text-md font-semibold text-default pt-2 underline mb-2 mt-4"
+          >
+            Styl i standard
+          </p>
           <div class="grid grid-cols-1 gap-3">
             <div class="space-y-1">
               <label class="text-sm font-medium text-default">Typ domu</label>
@@ -601,7 +1000,7 @@ const statusColor = (status: string) => {
                 :items="[
                   { label: 'Jednorodzinny', value: 'jednorodzinny' },
                   { label: 'Bliźniak', value: 'bliźniak' },
-                  { label: 'Rekreacyjny', value: 'rekreacyjny' },
+                  { label: 'Rekreacyjny', value: 'rekreacyjny' }
                 ]"
                 placeholder="Wybierz..."
               />
@@ -614,7 +1013,7 @@ const statusColor = (status: string) => {
                   { label: 'Tradycyjny', value: 'tradycyjny' },
                   { label: 'Nowoczesny', value: 'nowoczesny' },
                   { label: 'Klasyczny', value: 'klasyczny' },
-                  { label: 'Skandynawski', value: 'skandynawski' },
+                  { label: 'Skandynawski', value: 'skandynawski' }
                 ]"
                 placeholder="Wybierz..."
               />
@@ -626,7 +1025,7 @@ const statusColor = (status: string) => {
                 :items="[
                   { label: 'Standard', value: 'standard' },
                   { label: 'Energooszczędny', value: 'energooszczędny' },
-                  { label: 'Pasywny', value: 'pasywny' },
+                  { label: 'Pasywny', value: 'pasywny' }
                 ]"
                 placeholder="Wybierz..."
               />
