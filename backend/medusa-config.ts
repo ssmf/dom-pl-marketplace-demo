@@ -5,10 +5,10 @@ loadEnv(process.env.NODE_ENV || "development", process.cwd());
 module.exports = defineConfig({
   modules: [
     {
-      resolve: "./src/modules/house_plan"
+      resolve: "./src/modules/house_plan",
     },
     {
-      resolve: "./src/modules/vendor"
+      resolve: "./src/modules/vendor",
     },
     {
       resolve: "@medusajs/medusa/file",
@@ -49,14 +49,19 @@ module.exports = defineConfig({
     cookieOptions: {
       sameSite: "lax",
       secure: false,
-    }
+    },
   },
   admin: {
     vite: (config) => {
       return {
         server: {
           host: "0.0.0.0",
-          allowedHosts: ["localhost", ".localhost", "127.0.0.1"],
+          allowedHosts: [
+            "localhost",
+            ".localhost",
+            "127.0.0.1",
+            "admin.marketplace.dom.pl",
+          ],
           hmr: {
             port: 5173,
             clientPort: 5173,
