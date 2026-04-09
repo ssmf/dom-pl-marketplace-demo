@@ -1,5 +1,6 @@
 import { model } from "@medusajs/framework/utils"
 import PlanFamily from "./plan_family"
+import HousePlanImage from "./house_plan_image"
 
 const HousePlan = model.define("house_plan", {
   id: model.id().primaryKey(),
@@ -31,6 +32,9 @@ const HousePlan = model.define("house_plan", {
   family: model.belongsTo(() => PlanFamily, {
     mappedBy: "house_plans",
   }).nullable(),
+  images: model.hasMany(() => HousePlanImage, {
+    mappedBy: "house_plan",
+  }),
 })
 
 export default HousePlan
