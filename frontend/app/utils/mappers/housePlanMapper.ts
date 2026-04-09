@@ -28,6 +28,8 @@ export function mapToAppHousePlan(raw: any): AppHousePlan {
     fireplace: raw.fireplace ?? null,
     terrace: raw.terrace ?? null,
     houseType: raw.house_type ?? null,
+    thumbnail: raw.product?.thumbnail ?? null,
+    images: (raw.product?.images ?? []).map((img: any) => ({ id: img.id, url: img.url })),
     vendor: raw.vendor ?? null,
     variantId: raw.variant_id ?? null,
     family: raw.family ?? null,
