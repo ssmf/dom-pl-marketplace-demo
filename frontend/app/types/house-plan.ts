@@ -13,7 +13,6 @@ export interface AppHousePlan {
   title: string
   price: number
   description: string | null
-  img: string | null
   houseArea: number
   boilerRoomArea: number | null
   rooms: number

@@ -6,7 +6,6 @@ export function mapToAppHousePlan(raw: any): AppHousePlan {
     title: raw.title || '',
     price: Number(raw.price) || 0,
     description: raw.description ?? null,
-    img: raw.img ?? null,
     houseArea: Number(raw.house_area) || 0,
     boilerRoomArea: raw.boiler_room_area ? Number(raw.boiler_room_area) : null,
     rooms: Number(raw.rooms) || 0,
