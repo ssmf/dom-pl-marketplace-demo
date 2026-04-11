@@ -58,7 +58,6 @@ export async function POST(
               manage_inventory: false,
             },
           ],
-          thumbnail: body.img ?? undefined,
           ...(salesChannelId ? { sales_channels: [{ id: salesChannelId }] } : {}),
         },
       ],

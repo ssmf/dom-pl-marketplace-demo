@@ -18,7 +18,6 @@ const emptyForm = () => ({
   title: '',
   price: '',
   description: '',
-  img: '',
   house_area: '',
   boiler_room_area: '',
   rooms: '',
@@ -130,7 +129,6 @@ async function submitPlan() {
       ...(form.value.description.trim() && {
         description: form.value.description.trim()
       }),
-      ...(form.value.img.trim() && { img: form.value.img.trim() }),
       ...(form.value.boiler_room_area
         && !isNaN(Number(form.value.boiler_room_area)) && {
         boiler_room_area: Number(form.value.boiler_room_area)
@@ -362,7 +360,6 @@ function toFormString(val: number | null): string {
 function mapPlanToPrefill(plan: AppHousePlan): Partial<PlanForm> {
   return {
     description: plan.description ?? '',
-    img: plan.img ?? '',
     house_area: toFormString(plan.houseArea),
     boiler_room_area: toFormString(plan.boilerRoomArea),
     rooms: toFormString(plan.rooms),
@@ -701,11 +698,7 @@ const statusColor = (status: string) => {
           </div>
 
           <div class="space-y-1">
-            <label class="text-sm font-medium text-default">URL zdjęcia</label>
-            <UInput
-              v-model="form.img"
-              placeholder="https://..."
-            />
+            <p class="text-sm text-muted">Zdjęcia projektu dodaj przez panel admina Medusa po utworzeniu planu.</p>
           </div>
 
           <!-- Rodzina planów -->
