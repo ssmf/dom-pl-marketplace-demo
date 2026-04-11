@@ -119,13 +119,11 @@ const dimensionsLabel = computed(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Left Column: Image and Description -->
       <div class="flex flex-col gap-8">
-        <div class="aspect-video rounded-xl overflow-hidden border border-default">
-          <PlanImageGallery
-            :images="plan?.images ?? []"
-            :thumbnail="plan?.thumbnail"
-            mode="full"
-          />
-        </div>
+        <PlanImageGallery
+          :images="plan?.images ?? []"
+          :thumbnail="plan?.thumbnail"
+          mode="full"
+        />
 
         <div
           v-if="plan?.description"
